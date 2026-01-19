@@ -35,3 +35,25 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ansible
+*.retry
+ansible/inventory/hosts.ini
+vault_pass.txt
+*.vault
+
+# SSH Keys
+*.pem
+*.key
+id_rsa*
+
+# Environment-specific
+.env
+*.tfvars
+!example.tfvars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
