@@ -70,3 +70,9 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 - **Configure and manage virtual networking (15–20%)**: VNet, subnet, NSG, public IP
 - **Monitor and maintain Azure resources (10–15%)**: Azure Monitor, alerts, Log Analytics
 
+## Day 1 Progress
+
+- ✅ Remote state configured in Azure Storage
+- ✅ Provider locked to azurerm v4.x
+- ✅ Resource group deployed: rg-minecraft-dev-eus
+- ✅ Tagging and naming conventions established
