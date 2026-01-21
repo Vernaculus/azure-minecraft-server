@@ -35,9 +35,15 @@ Secure, cost-optimized Minecraft 1.21.1 server (5 players) on Azure B1ms VM. Bui
 - Resource Group deployed with governance tags
 - Variables and outputs structure implemented
 
-🚧 **Current**: Day 2 - Network Foundation (In Progress)
+✅ **Day 2 Complete** - Network foundation deployed (Jan 21, 2026)
+- VNet and subnet with proper IP addressing (10.10.0.0/16)
+- NSG with least-privilege security rules
+- Static public IP for consistent server address
+- Network module with outputs for VM integration
 
-**Next**: VNet, NSG, Public IP configuration
+🚧 **Current**: Day 3 - Compute & Storage (In Progress)
+
+**Next**: B1ms VM deployment with managed disk
 
 ## Documentation
 
