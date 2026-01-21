@@ -13,3 +13,20 @@ resource "azurerm_resource_group" "main" {
   tags = var.tags
 }
 
+# Calls the network module to create VNet, NSG, public IP, and NIC
+module "network" {
+  # Path to the network module directory
+  source = "./modules/network"
+
+  # Pass variables from root to module
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  vnet_address_space  = var.vnet_address_space
+  subnet_app_prefix   = var.subnet_app_prefix
+  admin_source_ip     = var.admin_source_ip
+  project_name        = var.project_name
+  environment         = var.environment
+  tags                = var.tags
+}
+
+
