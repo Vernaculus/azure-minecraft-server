@@ -17,7 +17,7 @@ Secure, cost-optimized Minecraft 1.21.1 server (5 players) on Azure B1ms VM. Bui
 - **IaC**: Terraform
 - **Config Mgmt**: Ansible
 - **OS**: Ubuntu 22.04 LTS
-- **Compute**: Standard_B1ms (1 vCPU, 2 GB RAM)
+- **Compute**: Standard_D2as_v6 (2 vCPU, 8 GB RAM, AMD EPYC v6)
 
 ## AZ-104 Skills Demonstrated
 

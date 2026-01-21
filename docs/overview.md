@@ -9,9 +9,9 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 - **Cloud Platform**: Microsoft Azure
 - **Infrastructure as Code**: Terraform (azurerm provider)
 - **Configuration Management**: Ansible
-- **Compute**: Azure Linux VM (Ubuntu 22.04 LTS, Standard_B1ms: 1 vCPU, 2 GB RAM)
+- **Compute**: Azure Linux VM (Ubuntu 22.04 LTS, Standard_D2as_v6: 2 vCPU, 8 GB RAM, AMD EPYC v6)
 - **Networking**: VNet, subnet, NSG with least-privilege rules, static public IP
-- **Storage**: Managed disk (20 GB Standard SSD) + Azure Storage Account for backups
+- **Storage**: Managed disk (30 GB Standard SSD) + Azure Storage Account for backups
 - **Application**: Minecraft Java Edition 1.21.1 server (vanilla, max 5 players)
 
 ## Success Criteria
@@ -39,7 +39,7 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 ### Operational Requirements
 - [ ] Daily automated backups of world data to Azure Blob Storage (cron + Azure CLI)
 - [ ] Azure Monitor VM insights enabled with at least one alert (CPU or availability)
-- [ ] Estimated monthly cost: $12–15 with auto-shutdown schedule (8 hours/day)
+- [ ] Estimated monthly cost: $24–73 depending on usage (6-8 hours/day auto-shutdown)
 - [ ] VM auto-shutdown configured for cost optimization
 
 ### Documentation & Portfolio Requirements
@@ -74,18 +74,18 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 
 - ✅ Remote state configured in Azure Storage
 - ✅ Provider locked to azurerm v4.x
-- ✅ Resource group deployed: rg-minecraft-dev-eus
+- ✅ Resource group deployed: rg-minecraft-dev-scus
 - ✅ Tagging and naming conventions established
 
 ## Day 2 Progress
 
 - ✅ Network module created with modular Terraform structure
-- ✅ VNet deployed: vnet-minecraft-dev-eus (10.10.0.0/16)
+- ✅ VNet deployed: vnet-minecraft-dev-scus (10.10.0.0/16)
 - ✅ Subnet deployed: snet-minecraft-app (10.10.1.0/24)
 - ✅ NSG configured with 3 rules:
   - Allow SSH (22) from admin IP only
   - Allow Minecraft (25565) from Internet
   - Deny all other inbound traffic
-- ✅ Static public IP provisioned: pip-minecraft-dev-eus
+- ✅ Static public IP provisioned: pip-minecraft-dev-scus
 - ✅ Network interface (NIC) created for VM attachment
 - ✅ Network architecture documented
