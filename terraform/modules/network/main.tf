@@ -1,7 +1,7 @@
 # Creates the virtual network (VNet) for all resources
 resource "azurerm_virtual_network" "main" {
   # Name follows convention: vnet-project-env-region
-  name = "vnet-${var.project_name}-${var.environment}-eus"
+  name = "vnet-${var.project_name}-${var.environment}-scus"
 
   # Address space defines the IP range available
   address_space = var.vnet_address_space
@@ -116,7 +116,7 @@ resource "azurerm_subnet_network_security_group_association" "app" {
 
 # Creates a static public IP address
 resource "azurerm_public_ip" "main" {
-  name                = "pip-${var.project_name}-${var.environment}-eus"
+  name                = "pip-${var.project_name}-${var.environment}-scus"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -131,7 +131,7 @@ resource "azurerm_public_ip" "main" {
 
 # Creates a network interface card (NIC) to attach to VM
 resource "azurerm_network_interface" "main" {
-  name                = "nic-${var.project_name}-${var.environment}-eus"
+  name                = "nic-${var.project_name}-${var.environment}-scus"
   location            = var.location
   resource_group_name = var.resource_group_name
 
