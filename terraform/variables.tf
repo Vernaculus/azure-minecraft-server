@@ -63,3 +63,24 @@ variable "subscription_id" {
   # No default for security; must be provided via tfvars or env var
 }
 
+# Virtual network address space (CIDR notation)
+variable "vnet_address_space" {
+  description = "Address space for the virtual network"
+  type        = list(string)
+  default     = ["10.10.0.0/16"]
+}
+
+# Subnet address prefix for application tier
+variable "subnet_app_prefix" {
+  description = "Address prefix for the application subnet"
+  type        = list(string)
+  default     = ["10.10.1.0/24"]
+}
+
+# Your public IP for SSH access (CIDR format: x.x.x.x/32)
+variable "admin_source_ip" {
+  description = "Public IP address allowed for SSH (CIDR notation)"
+  type        = string
+  # Must be provided in terraform.tfvars for security
+}
+
