@@ -21,3 +21,21 @@ output "location" {
   value       = azurerm_resource_group.main.location
 }
 
+# Outputs the public IP for easy access
+output "minecraft_public_ip" {
+  description = "Public IP address to connect to Minecraft server"
+  value       = module.network.public_ip_address
+}
+
+# Outputs the VNet ID
+output "vnet_id" {
+  description = "Virtual network ID"
+  value       = module.network.vnet_id
+}
+
+# Outputs the subnet ID
+output "subnet_id" {
+  description = "Application subnet ID"
+  value       = module.network.subnet_id
+}
+
