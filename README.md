@@ -41,9 +41,17 @@ Secure, cost-optimized Minecraft 1.21.1 server (5 players) on Azure B1ms VM. Bui
 - Static public IP for consistent server address
 - Network module with outputs for VM integration
 
-🚧 **Current**: Day 3 - Compute & Storage (In Progress)
+✅ **Day 3 Complete** - Compute deployed and validated (Jan 21, 2026)
+- Standard_D2as_v6 VM (2 vCPU, 8 GB RAM, AMD EPYC v6)
+- Ubuntu 22.04 LTS with SSH key authentication
+- 30 GB Standard SSD OS disk
+- Successfully validated SSH access
+- Public IP: 4.150.29.71
+- **Challenge**: Overcame Azure capacity constraints through systematic SKU discovery
 
-**Next**: B1ms VM deployment with managed disk
+🚧 **Current**: Day 4 - OS Hardening with Ansible
+
+**Next**: System security configuration (UFW, fail2ban, SSH hardening)
 
 ## Documentation
 

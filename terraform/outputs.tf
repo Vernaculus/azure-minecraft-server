@@ -39,3 +39,21 @@ output "subnet_id" {
   value       = module.network.subnet_id
 }
 
+# Outputs the VM name for reference
+output "vm_name" {
+  description = "Name of the Minecraft server VM"
+  value       = module.compute.vm_name
+}
+
+# Outputs the VM ID
+output "vm_id" {
+  description = "VM resource ID"
+  value       = module.compute.vm_id
+}
+
+# Outputs the private IP
+output "vm_private_ip" {
+  description = "Private IP address of the VM"
+  value       = module.compute.private_ip_address
+}
+
