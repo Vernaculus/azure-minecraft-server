@@ -4,7 +4,7 @@ resource "azurerm_resource_group" "main" {
   # Local name: main (used within Terraform to reference this)
 
   # Actual name in Azure (follows naming convention: rg-project-env-region)
-  name = "rg-${var.project_name}-${var.environment}-eus"
+  name = "rg-${var.project_name}-${var.environment}-scus"
 
   # Azure region from variables.tf
   location = var.location
@@ -29,4 +29,21 @@ module "network" {
   tags                = var.tags
 }
 
+# Calls the compute module to create the VM
+module "compute" {
+  # Path to the compute module directory
+  source = "./modules/compute"
 
+  # Pass variables from root to module
+  resource_group_name  = azurerm_resource_group.main.name
+  location             = azurerm_resource_group.main.location
+  vm_size              = var.vm_size
+  admin_username       = var.admin_username
+  admin_ssh_key        = var.admin_ssh_key
+  network_interface_id = module.network.nic_id
+  os_disk_size_gb      = var.os_disk_size_gb
+  os_disk_type         = var.os_disk_type
+  project_name         = var.project_name
+  environment          = var.environment
+  tags                 = var.tags
+}

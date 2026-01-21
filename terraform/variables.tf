@@ -7,7 +7,7 @@ variable "location" {
   type = string
 
   # Default value used if no override provided
-  default = "East US"
+  default = "South Central US"
 }
 
 # Project name used in resource naming convention
@@ -44,7 +44,7 @@ variable "tags" {
 variable "vm_size" {
   description = "Azure VM SKU for the Minecraft server"
   type        = string
-  default     = "Standard_B1ms"
+  default     = "Standard_D2as_v6"  # AMD EPYC v6, available now
 }
 
 # SSH public key for VM authentication
@@ -82,5 +82,26 @@ variable "admin_source_ip" {
   description = "Public IP address allowed for SSH (CIDR notation)"
   type        = string
   # Must be provided in terraform.tfvars for security
+}
+
+# VM admin username for SSH login
+variable "admin_username" {
+  description = "Administrator username for VM"
+  type        = string
+  default     = "mcadmin"
+}
+
+# OS disk size in GB
+variable "os_disk_size_gb" {
+  description = "Size of OS disk in GB"
+  type        = number
+  default     = 30
+}
+
+# OS disk storage account type
+variable "os_disk_type" {
+  description = "Storage account type for OS disk"
+  type        = string
+  default     = "StandardSSD_LRS"
 }
 
