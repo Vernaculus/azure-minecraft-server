@@ -76,3 +76,16 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 - ✅ Provider locked to azurerm v4.x
 - ✅ Resource group deployed: rg-minecraft-dev-eus
 - ✅ Tagging and naming conventions established
+
+## Day 2 Progress
+
+- ✅ Network module created with modular Terraform structure
+- ✅ VNet deployed: vnet-minecraft-dev-eus (10.10.0.0/16)
+- ✅ Subnet deployed: snet-minecraft-app (10.10.1.0/24)
+- ✅ NSG configured with 3 rules:
+  - Allow SSH (22) from admin IP only
+  - Allow Minecraft (25565) from Internet
+  - Deny all other inbound traffic
+- ✅ Static public IP provisioned: pip-minecraft-dev-eus
+- ✅ Network interface (NIC) created for VM attachment
+- ✅ Network architecture documented
