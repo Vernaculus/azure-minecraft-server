@@ -24,11 +24,11 @@ Following Azure best practices for naming:
 
 | Resource Type | Name | Purpose |
 |---------------|------|---------|
-| Virtual Network | `vnet-minecraft-dev-eus` | Main network container |
+| Virtual Network | `vnet-minecraft-dev-scus` | Main network container |
 | Subnet | `snet-minecraft-app` | Application tier subnet |
 | Network Security Group | `nsg-minecraft-app` | Firewall for app subnet |
-| Public IP | `pip-minecraft-dev-eus` | External IP address |
-| Network Interface | `nic-minecraft-dev-eus` | VM network adapter |
+| Public IP | `pip-minecraft-dev-scus` | External IP address |
+| Network Interface | `nic-minecraft-dev-scus` | VM network adapter |
 
 Pattern: `{type}-{project}-{tier/env}-{region}`
 
@@ -72,12 +72,12 @@ Internet
 |
 ┌──▼────────────────────────────────────┐
 │ Public IP (Static) │
-│ pip-minecraft-dev-eus │
+│ pip-minecraft-dev-scus │
 └──┬────────────────────────────────────┘
 |
 ┌──▼────────────────────────────────────┐
 │ Network Interface (NIC) │
-│ nic-minecraft-dev-eus │
+│ nic-minecraft-dev-scus │
 │ Private IP: 10.10.1.x (Dynamic) │
 └──┬────────────────────────────────────┘
 |
@@ -93,7 +93,7 @@ Internet
 └───────────────────────────────────────┘
 |
 ┌────────────▼──────────────────────────┐
-│ VNet: vnet-minecraft-dev-eus │
+│ VNet: vnet-minecraft-dev-scus │
 │ 10.10.0.0/16 │
 │ (Room for future subnets) │
 └───────────────────────────────────────┘ 
@@ -120,7 +120,7 @@ Internet
 ### Cannot SSH to VM
 1. Verify admin source IP: `curl ifconfig.me`
 2. Check NSG effective rules: `az network nsg rule list`
-3. Confirm public IP: `az network public-ip show --name pip-minecraft-dev-eus`
+3. Confirm public IP: `az network public-ip show --name pip-minecraft-dev-scus`
 4. Test connectivity: `nc -zv <public-ip> 22`
 
 ### Cannot Connect to Minecraft
