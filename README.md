@@ -1,6 +1,6 @@
 # Azure Minecraft Server
 
-Secure, cost-optimized Minecraft 1.21.1 server (5 players) on Azure B1ms VM. Built with Terraform and Ansible to demonstrate Azure Administrator skills.
+Secure, cost-optimized Minecraft 1.21.1 server (5 players) on Azure Standard_D2as_v6 VM. Built with Terraform and Ansible to demonstrate Azure Administrator skills.
 
 ## Features
 
