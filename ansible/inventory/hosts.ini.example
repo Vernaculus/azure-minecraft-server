@@ -1,0 +1,2 @@
+[minecraft_servers]
+minecraft-dev ansible_host=<ip-address> ansible_user=mcadmin
