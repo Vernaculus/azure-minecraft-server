@@ -1,0 +1,772 @@
+---
+# System Hardening Role - Tasks
+# Purpose: Secure the Ubuntu VM against common attack vectors
+# This role implements defense-in-depth: multiple layers of security
+
+# ==============================================================================
+# TASK 1: Install Security Packages
+# ==============================================================================
+# Why: These packages provide automated security responses
+# - fail2ban: Blocks IPs after repeated SSH failures (stops brute-force)
+# - unattended-upgrades: Auto-installs security patches (prevents exploit)
+# - ufw: Firewall with simple interface (reduces attack surface)
+# - apt-listchanges: Shows what changed in updates (awareness)
+# ==============================================================================
+
+- name: Install security and monitoring packages
+  ansible.builtin.apt:
+    # Package list to install
+    name:
+      # Intrusion prevention - bans IPs after failed auth attempts
+      - fail2ban
+      
+      # Automatic security updates - critical for internet-facing servers
+      - unattended-upgrades
+      
+      # Firewall - Ubuntu's simplified iptables interface
+      - ufw
+      
+      # Shows changelog before package upgrades (optional but good practice)
+      - apt-listchanges
+      
+      # Network diagnostics (useful for troubleshooting)
+      - net-tools
+      
+      # Process monitoring
+      - htop
+    
+    # Ensure packages are present (install if missing)
+    state: present
+    
+    # Update apt cache before installing (ensures latest versions)
+    update_cache: true
+  
+  # Tags allow running just this task: ansible-playbook site.yml --tags packages
+  tags:
+    - packages
+    - security
+
+# ==============================================================================
+# TASK 2: Configure Automatic Security Updates
+# ==============================================================================
+# Why: Manually updating servers is error-prone and slow
+# Security patches must be applied within hours of release, not days
+# IMPORTANT: Auto-reboot DISABLED for cost-optimized VMs (runs on schedule)
+# ==============================================================================
+
+- name: Configure unattended-upgrades for automatic security patches
+  ansible.builtin.copy:
+    # Content to write to the file
+    content: |
+      // Unattended-Upgrade configuration for cost-optimized VM
+      // Security patches auto-install daily
+      // Reboot handling: Manual via intelligent reboot manager
+      
+      Unattended-Upgrade::Allowed-Origins {
+          // Ubuntu security updates (CRITICAL - always enable)
+          "${distro_id}:${distro_codename}-security";
+          
+          // Ubuntu stable updates (bug fixes, safe to auto-install)
+          "${distro_id}:${distro_codename}-updates";
+      };
+      
+      // Which packages to NEVER auto-update (prevents breaking changes)
+      Unattended-Upgrade::Package-Blacklist {
+          // Empty - allow all security updates
+      };
+      
+      // Automatically remove unused dependencies (saves disk space)
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+      
+      // IMPORTANT: Auto-reboot DISABLED for cost-optimization
+      // Reason: VM runs on schedule (deallocated during off-hours)
+      // Manual process: Check /var/run/reboot-required before gaming sessions
+      // See: /usr/local/bin/check-reboot-required
+      Unattended-Upgrade::Automatic-Reboot "false";
+      
+      // Log all actions for audit trail
+      Unattended-Upgrade::SyslogEnable "true";
+      Unattended-Upgrade::SyslogFacility "daemon";
+    
+    # Destination path on remote system
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    
+    # File permissions (root read/write, others read-only)
+    owner: root
+    group: root
+    mode: '0644'
+  
+  # Notify handler to restart unattended-upgrades service
+  notify: restart unattended-upgrades
+  
+  tags:
+    - updates
+    - security
+
+# ==============================================================================
+# TASK 3: Enable Automatic Update Timer
+# ==============================================================================
+# Why: Installing unattended-upgrades package doesn't enable it by default
+# This systemd timer runs daily to check for and install updates
+# ==============================================================================
+
+- name: Enable and start unattended-upgrades service
+  ansible.builtin.systemd:
+    # Service name (systemd unit)
+    name: unattended-upgrades
+    
+    # Start now if not running
+    state: started
+    
+    # Enable to start on boot
+    enabled: true
+  
+  tags:
+    - updates
+    - security
+
+# ==============================================================================
+# TASK 4: Configure fail2ban for SSH Protection
+# ==============================================================================
+# Why: SSH is exposed to the internet and receives thousands of login attempts
+# Fail2ban monitors auth logs and blocks IPs after N failed attempts
+# This stops brute-force attacks cold (even against weak passwords)
+# ==============================================================================
+
+- name: Configure fail2ban SSH jail
+  ansible.builtin.copy:
+    content: |
+      # Fail2ban SSH jail configuration
+      # Monitors /var/log/auth.log for failed SSH attempts
+      # Blocks attacking IPs using iptables firewall rules
+      
+      [DEFAULT]
+      # Ban time: How long to block an IP (10 minutes)
+      # After this, IP is unbanned (allows legitimate lockouts to recover)
+      bantime = 600
+      
+      # Find time: Time window to count failures (10 minutes)
+      # If 'maxretry' failures occur within this window, IP is banned
+      findtime = 600
+      
+      # Max retry: Failed attempts before ban (5 attempts)
+      # Balance between security (low) and usability (high)
+      # 5 is reasonable - no human types wrong password 5 times
+      maxretry = 5
+      
+      [sshd]
+      # Enable SSH jail (monitors SSH authentication)
+      enabled = true
+      
+      # Log file to monitor for failed attempts
+      logpath = /var/log/auth.log
+      
+      # Port to ban on (SSH port 22)
+      port = ssh
+      
+      # Backend: How to ban IPs
+      # systemd: Use systemd journal (modern Ubuntu default)
+      backend = systemd
+    
+    # Destination: Local configuration (overrides defaults)
+    dest: /etc/fail2ban/jail.local
+    
+    owner: root
+    group: root
+    mode: '0644'
+  
+  # Restart fail2ban to apply new config
+  notify: restart fail2ban
+  
+  tags:
+    - fail2ban
+    - security
+
+# ==============================================================================
+# TASK 5: Start and Enable fail2ban
+# ==============================================================================
+# Why: fail2ban must be running to actively monitor logs and block attackers
+# Enable on boot so protection persists after VM restarts
+# ==============================================================================
+
+- name: Ensure fail2ban is running and enabled
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+    enabled: true
+  
+  tags:
+    - fail2ban
+    - security
+
+# ==============================================================================
+# TASK 6: Configure UFW Firewall - Default Policies
+# ==============================================================================
+# Why: Defense-in-depth - even if Azure NSG misconfigured, host firewall protects
+# Default-deny inbound: Block everything except what we explicitly allow
+# Default-allow outbound: Allow VM to reach internet (apt, backups, etc)
+# ==============================================================================
+
+- name: Set UFW default policies
+  community.general.ufw:
+    # Default policy for incoming connections: DENY
+    # This is critical - block everything by default
+    direction: incoming
+    policy: deny
+  
+  tags:
+    - firewall
+    - security
+
+- name: Set UFW outbound default policy
+  community.general.ufw:
+    # Default policy for outgoing connections: ALLOW
+    # Needed for: apt updates, Azure Storage, Minecraft auth servers
+    direction: outgoing
+    policy: allow
+  
+  tags:
+    - firewall
+    - security
+
+# ==============================================================================
+# TASK 7: Allow SSH Through Firewall
+# ==============================================================================
+# Why: If we enable UFW without allowing SSH, we lock ourselves out!
+# SSH must be allowed BEFORE enabling the firewall
+# Limit: Rate-limits connections (max 6 attempts per 30 seconds per IP)
+# ==============================================================================
+
+- name: Allow SSH through firewall with rate limiting
+  community.general.ufw:
+    # Service/port to allow
+    rule: limit
+    
+    # Port number or service name
+    port: "22"
+    
+    # Protocol (SSH uses TCP)
+    proto: tcp
+    
+    # Comment for documentation
+    comment: "SSH with rate limiting"
+  
+  tags:
+    - firewall
+    - security
+
+# ==============================================================================
+# TASK 8: Allow Minecraft Port Through Firewall
+# ==============================================================================
+# Why: Players need to connect on port 25565
+# This is why we're building the server - must be accessible!
+# ==============================================================================
+
+- name: Allow Minecraft port through firewall
+  community.general.ufw:
+    rule: allow
+    
+    # Minecraft Java Edition default port
+    port: "25565"
+    
+    proto: tcp
+    
+    comment: "Minecraft server"
+  
+  tags:
+    - firewall
+    - minecraft
+
+# ==============================================================================
+# TASK 9: Enable UFW Firewall
+# ==============================================================================
+# Why: UFW rules are configured but not active until enabled
+# Once enabled, only SSH (rate-limited) and Minecraft are accessible
+# ==============================================================================
+
+- name: Enable UFW firewall
+  community.general.ufw:
+    # Enable the firewall
+    state: enabled
+  
+  tags:
+    - firewall
+    - security
+
+# ==============================================================================
+# TASK 10: Verify Security Services Are Running
+# ==============================================================================
+# Why: Validation step - ensure all security measures are active
+# This catches configuration errors before they become security incidents
+# ==============================================================================
+
+- name: Verify fail2ban is active
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+  
+  # Check mode - verify without changing
+  check_mode: true
+  
+  tags:
+    - validation
+    - security
+
+- name: Display UFW status
+  ansible.builtin.command: ufw status verbose
+  
+  # Register output so we can display it
+  register: ufw_status
+  
+  # This command only reads state, doesn't modify
+  changed_when: false
+  
+  tags:
+    - validation
+    - security
+
+- name: Show firewall configuration
+  ansible.builtin.debug:
+    # Display the UFW status output
+    var: ufw_status.stdout_lines
+  
+  tags:
+    - validation
+    - security
+
+# ==============================================================================
+# TASK 11: Harden SSH Configuration
+# ==============================================================================
+# Why: SSH is the primary attack vector for internet-facing Linux servers
+# Even with fail2ban and UFW, weak SSH config can be exploited
+# This implements SSH security best practices from CIS benchmarks
+# ==============================================================================
+
+- name: Harden SSH configuration
+  ansible.builtin.lineinfile:
+    # Path to SSH daemon configuration file
+    path: /etc/ssh/sshd_config
+    
+    # Regex to find the line (matches commented or uncommented)
+    regexp: "{{ item.regexp }}"
+    
+    # What to replace it with (our hardened setting)
+    line: "{{ item.line }}"
+    
+    # Backup original file before modifying (allows rollback)
+    backup: true
+  
+  # Loop through multiple SSH settings
+  loop:
+    # Disable root login via SSH
+    # Why: Attackers always try 'root' account, even with key auth
+    # Best practice: Use sudo from regular account (audit trail)
+    - regexp: '^#?PermitRootLogin'
+      line: 'PermitRootLogin no'
+    
+    # Disable password authentication (force SSH keys only)
+    # Why: Passwords can be brute-forced, keys cannot
+    # This makes fail2ban almost unnecessary (but keep for defense-in-depth)
+    - regexp: '^#?PasswordAuthentication'
+      line: 'PasswordAuthentication no'
+    
+    # Disable challenge-response authentication
+    # Why: Closes another password-based auth vector
+    - regexp: '^#?ChallengeResponseAuthentication'
+      line: 'ChallengeResponseAuthentication no'
+    
+    # Disable empty passwords (should already be off)
+    # Why: Extra safety - never allow passwordless accounts
+    - regexp: '^#?PermitEmptyPasswords'
+      line: 'PermitEmptyPasswords no'
+    
+    # Reduce login grace time from 120s to 30s
+    # Why: Limits connection slot exhaustion (DoS attack)
+    # Attacker can't hold connections open as long
+    - regexp: '^#?LoginGraceTime'
+      line: 'LoginGraceTime 30'
+    
+    # Max authentication attempts before disconnect
+    # Why: 3 tries is enough for legitimate users (typos happen)
+    # Reduces brute-force effectiveness
+    - regexp: '^#?MaxAuthTries'
+      line: 'MaxAuthTries 3'
+    
+    # Only use SSH protocol 2 (not legacy SSHv1)
+    # Why: SSHv1 has known vulnerabilities, v2 is the secure modern protocol
+    - regexp: '^#?Protocol'
+      line: 'Protocol 2'
+  
+  # Restart SSH service to apply new config
+  notify: restart sshd
+  
+  tags:
+    - ssh
+    - security
+    - hardening
+
+# ==============================================================================
+# TASK 12: Verify SSH Configuration Syntax
+# ==============================================================================
+# Why: Invalid sshd_config will prevent SSH from starting
+# If SSH won't start and we're remote, we're LOCKED OUT
+# This test validates config BEFORE restarting SSH (safety check)
+# ==============================================================================
+
+- name: Test SSH configuration syntax
+  ansible.builtin.command: sshd -t
+  
+  # Only check syntax, don't actually start SSH
+  changed_when: false
+  
+  # If this fails, playbook stops before restarting SSH (prevents lockout)
+  register: sshd_test
+  
+  tags:
+    - ssh
+    - validation
+
+- name: Display SSH config test result
+  ansible.builtin.debug:
+    msg: "SSH configuration syntax is valid"
+  
+  # Only show if test passed
+  when: sshd_test.rc == 0
+  
+  tags:
+    - ssh
+    - validation
+
+# ==============================================================================
+# TASK 13: Install RCON Client for Server Management
+# ==============================================================================
+# Why: Allows scripts to send commands to Minecraft (player count, messages)
+# Security: RCON will be localhost-only, not exposed to internet
+# Used for: Reboot notifications, automated management
+# ==============================================================================
+
+- name: Install build dependencies for mcrcon
+  ansible.builtin.apt:
+    name:
+      - git
+      - gcc
+      - make
+    state: present
+  tags:
+    - minecraft
+    - dependencies
+
+- name: Clone mcrcon repository
+  ansible.builtin.git:
+    repo: https://github.com/Tiiffi/mcrcon.git
+    dest: /tmp/mcrcon
+    version: master
+    force: true
+  tags:
+    - minecraft
+    - dependencies
+
+- name: Build and install mcrcon
+  ansible.builtin.shell: |
+    cd /tmp/mcrcon
+    make
+    make install
+  args:
+    creates: /usr/local/bin/mcrcon
+  tags:
+    - minecraft
+    - dependencies
+
+# ==============================================================================
+# TASK 14: Create Intelligent Reboot Check Script
+# ==============================================================================
+# Logic:
+# 1. Check if reboot required (/var/run/reboot-required)
+# 2. If NO: Exit cleanly
+# 3. If YES and Minecraft NOT running: Log and exit (manual reboot decision)
+# 4. If YES and Minecraft running:
+#    a. Query player count via RCON
+#    b. If 0 players: Auto-reboot immediately
+#    c. If >0 players: Start 10-minute countdown with warnings
+# ==============================================================================
+
+- name: Create intelligent reboot notification script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Intelligent Reboot Manager
+      # Handles security update reboots based on server state and player count
+      
+      set -euo pipefail
+      
+      # Configuration
+      REBOOT_REQUIRED="/var/run/reboot-required"
+      PACKAGES_FILE="/var/run/reboot-required.pkgs"
+      RCON_HOST="127.0.0.1"
+      RCON_PORT="25575"
+      RCON_PASSWORD_FILE="/opt/minecraft/rcon_password"
+      MINECRAFT_SERVICE="minecraft"
+      LOG_TAG="reboot-manager"
+      
+      # Logging function
+      log_message() {
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+          logger -t "$LOG_TAG" "$1"
+      }
+      
+      # RCON command wrapper with error handling
+      send_rcon_command() {
+          local cmd="$1"
+          if [ -f "$RCON_PASSWORD_FILE" ]; then
+              local password=$(cat "$RCON_PASSWORD_FILE")
+              mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$password" "$cmd" 2>/dev/null
+              return $?
+          else
+              log_message "ERROR: RCON password file not found"
+              return 1
+          fi
+      }
+      
+      # Get player count from Minecraft server
+      get_player_count() {
+          local list_output=$(send_rcon_command "list" 2>/dev/null || echo "")
+          
+          # Parse output: "There are 3 of a max of 20 players online:"
+          if echo "$list_output" | grep -q "There are"; then
+              echo "$list_output" | grep -oP 'There are \K[0-9]+' || echo "0"
+          else
+              echo "0"
+          fi
+      }
+      
+      # Send message to Minecraft chat
+      send_minecraft_message() {
+          send_rcon_command "say [SYSTEM] $1"
+      }
+      
+      # Update SSH login banner
+      update_motd() {
+          local status="$1"
+          if [ "$status" = "warning" ]; then
+              cat > /etc/motd <<'MOTD_EOF'
+      
+      ================================================================
+           WARNING: REBOOT PENDING FOR SECURITY UPDATES
+      ================================================================
+      
+      System requires restart to apply kernel/security patches.
+      Run: sudo /usr/local/bin/check-reboot-required
+      
+      MOTD_EOF
+          else
+              echo "" > /etc/motd
+          fi
+      }
+      
+      # Graceful Minecraft shutdown
+      shutdown_minecraft() {
+          log_message "Shutting down Minecraft server gracefully..."
+          send_minecraft_message "Server shutting down NOW for security updates..."
+          sleep 2
+          systemctl stop "$MINECRAFT_SERVICE"
+          sleep 3
+      }
+      
+      # Main logic
+      main() {
+          # Check if reboot is required
+          if [ ! -f "$REBOOT_REQUIRED" ]; then
+              echo "No reboot required. System is up to date."
+              update_motd "clear"
+              exit 0
+          fi
+          
+          # Reboot IS required - gather information
+          echo "================================================================"
+          echo "        WARNING: REBOOT REQUIRED FOR UPDATES"
+          echo "================================================================"
+          echo ""
+          
+          # Show affected packages
+          if [ -f "$PACKAGES_FILE" ]; then
+              echo "Packages requiring reboot:"
+              cat "$PACKAGES_FILE" | sed 's/^/  - /'
+              echo ""
+          fi
+          
+          log_message "System reboot required for security updates"
+          update_motd "warning"
+          
+          # Check if Minecraft is running
+          if ! systemctl is-active --quiet "$MINECRAFT_SERVICE"; then
+              echo "INFO: Minecraft server is not running."
+              echo ""
+              echo "Recommended action:"
+              echo "  sudo reboot"
+              echo ""
+              exit 1
+          fi
+          
+          echo "Minecraft server is running. Checking player count..."
+          
+          # Get player count
+          PLAYER_COUNT=$(get_player_count)
+          
+          if [ -z "$PLAYER_COUNT" ] || [ "$PLAYER_COUNT" -eq 0 ]; then
+              # NO PLAYERS - Auto reboot
+              echo "No players online. Initiating automatic reboot..."
+              log_message "Auto-rebooting: 0 players online, security updates required"
+              
+              shutdown_minecraft
+              
+              echo "Rebooting system in 5 seconds..."
+              sleep 5
+              reboot
+              
+          else
+              # PLAYERS ONLINE - Start countdown
+              echo "WARNING: $PLAYER_COUNT player(s) currently online."
+              echo "Starting 10-minute countdown with in-game warnings..."
+              echo ""
+              
+              log_message "Players online ($PLAYER_COUNT), starting 10-minute reboot countdown"
+              
+              send_minecraft_message "WARNING: Server will restart in 10 minutes"
+              send_minecraft_message "Reason: Critical security updates require reboot"
+              send_minecraft_message "Please save your progress and prepare to log out!"
+              
+              # Countdown: 9, 8, 7, 6, 5, 4, 3, 2 minute warnings
+              for minutes in 9 8 7 6 5 4 3 2; do
+                  sleep 60
+                  send_minecraft_message "WARNING: Server restarting in $minutes minutes!"
+                  echo "  - Warning sent: $minutes minutes remaining"
+              done
+              
+              # Final minute - every 30 seconds
+              sleep 30
+              send_minecraft_message "WARNING: Server restarting in 30 SECONDS! SAVE NOW!"
+              echo "  - Final warning: 30 seconds"
+              
+              sleep 20
+              send_minecraft_message "WARNING: 10 SECONDS UNTIL RESTART!"
+              echo "  - Final warning: 10 seconds"
+              
+              sleep 7
+              send_minecraft_message "Restarting in 3... 2... 1..."
+              
+              sleep 3
+              shutdown_minecraft
+              
+              log_message "Rebooting after 10-minute player countdown"
+              echo ""
+              echo "Rebooting now..."
+              reboot
+          fi
+      }
+      
+      # Execute main logic
+      main "$@"
+    
+    dest: /usr/local/bin/check-reboot-required
+    owner: root
+    group: root
+    mode: '0755'
+  
+  tags:
+    - updates
+    - maintenance
+    - minecraft
+
+# ==============================================================================
+# TASK 15: Create Manual Scheduled Reboot Script
+# ==============================================================================
+# Use case: Admin wants manual control over timing
+# Usage: sudo /usr/local/bin/scheduled-reboot.sh [minutes]
+# ==============================================================================
+
+- name: Create manual scheduled reboot script
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      # Manual Scheduled Reboot with Player Countdown
+      # Usage: scheduled-reboot.sh [minutes] (default: 10)
+      
+      set -euo pipefail
+      
+      MINUTES=${1:-10}
+      RCON_PASSWORD_FILE="/opt/minecraft/rcon_password"
+      LOG_TAG="scheduled-reboot"
+      
+      if [ ! -f "$RCON_PASSWORD_FILE" ]; then
+          echo "ERROR: Minecraft RCON not configured yet"
+          echo "Stopping Minecraft and rebooting immediately..."
+          systemctl stop minecraft 2>/dev/null || true
+          sleep 5
+          reboot
+          exit
+      fi
+      
+      RCON_PASSWORD=$(cat "$RCON_PASSWORD_FILE")
+      
+      send_msg() {
+          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say [ADMIN] $1" 2>/dev/null
+          logger -t "$LOG_TAG" "$1"
+      }
+      
+      echo "==================================================="
+      echo "  Scheduled Reboot: $MINUTES minute countdown"
+      echo "==================================================="
+      echo ""
+      
+      send_msg "WARNING: Server restarting in $MINUTES minutes"
+      send_msg "Reason: Maintenance/Updates - Please save your work!"
+      
+      # Calculate countdown intervals
+      remaining=$MINUTES
+      
+      while [ $remaining -gt 1 ]; do
+          sleep 60
+          remaining=$((remaining - 1))
+          
+          # Send warnings at: 5, 4, 3, 2 minutes
+          if [ $remaining -eq 5 ] || [ $remaining -eq 4 ] || [ $remaining -eq 3 ] || [ $remaining -eq 2 ]; then
+              send_msg "WARNING: Server restarting in $remaining minutes!"
+              echo "  - Warning sent: $remaining minutes"
+          fi
+      done
+      
+      # Final minute countdown
+      send_msg "WARNING: Server restarting in 1 MINUTE! SAVE NOW!"
+      echo "  - 1 minute warning"
+      sleep 30
+      
+      send_msg "WARNING: 30 SECONDS!"
+      echo "  - 30 seconds"
+      sleep 20
+      
+      send_msg "WARNING: 10 SECONDS - LOGGING OUT RECOMMENDED!"
+      echo "  - 10 seconds"
+      sleep 7
+      
+      send_msg "Restarting in 3... 2... 1..."
+      sleep 3
+      
+      echo ""
+      echo "Shutting down Minecraft server..."
+      systemctl stop minecraft
+      sleep 3
+      
+      echo "Rebooting system..."
+      logger -t "$LOG_TAG" "System reboot initiated after $MINUTES minute countdown"
+      reboot
+    
+    dest: /usr/local/bin/scheduled-reboot.sh
+    owner: root
+    group: root
+    mode: '0755'
+  
+  tags:
+    - updates
+    - maintenance
+    - minecraft
+ 
