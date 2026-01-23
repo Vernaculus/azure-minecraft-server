@@ -1,0 +1,16 @@
+---
+# Minecraft Server Handlers
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: restart minecraft
+  ansible.builtin.systemd:
+    name: minecraft
+    state: restarted
+  become: true
+  # Ignore errors if service doesn't exist yet (first run)
+  ignore_errors: true
+ 

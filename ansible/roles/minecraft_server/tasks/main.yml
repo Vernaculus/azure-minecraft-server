@@ -1,0 +1,74 @@
+---
+# Minecraft Server Installation Tasks
+
+- name: Create minecraft system user
+  ansible.builtin.user:
+    name: minecraft
+    system: true
+    shell: /bin/bash
+    home: /opt/minecraft
+    create_home: true
+    comment: "Minecraft Server Service Account"
+
+- name: Install Java Runtime (OpenJDK 21)
+  ansible.builtin.apt:
+    name: openjdk-21-jre-headless
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create server directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: minecraft
+    group: minecraft
+    mode: '0755'
+  loop:
+    - /opt/minecraft
+    - /opt/minecraft/backups
+    - /opt/minecraft/logs
+
+- name: Download Minecraft server JAR
+  ansible.builtin.get_url:
+    url: "{{ minecraft_jar_url }}"
+    dest: /opt/minecraft/server.jar
+    owner: minecraft
+    group: minecraft
+    mode: '0644'
+  notify: restart minecraft
+
+- name: Accept EULA
+  ansible.builtin.copy:
+    content: "eula=true\n"
+    dest: /opt/minecraft/eula.txt
+    owner: minecraft
+    group: minecraft
+    mode: '0644'
+
+- name: Deploy server.properties
+  ansible.builtin.template:
+    src: server.properties.j2
+    dest: /opt/minecraft/server.properties
+    owner: minecraft
+    group: minecraft
+    mode: '0644'
+  notify: restart minecraft
+
+- name: Deploy systemd service
+  ansible.builtin.template:
+    src: minecraft.service.j2
+    dest: /etc/systemd/system/minecraft.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart minecraft
+
+- name: Enable and start Minecraft service
+  ansible.builtin.systemd:
+    name: minecraft
+    enabled: true
+    state: started
+
