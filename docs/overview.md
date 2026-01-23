@@ -29,12 +29,12 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 - [ ] All resources tagged for governance (env, app, owner, costCenter)
 
 ### Security Requirements
-- [ ] NSG allows only SSH (port 22) from administrator IP and Minecraft (port 25565) publicly
-- [ ] SSH password authentication disabled; key-based auth only
-- [ ] Linux firewall (UFW) configured with default-deny inbound policy
-- [ ] SSH root login disabled
-- [ ] fail2ban active for SSH brute-force protection
-- [ ] Automatic security updates enabled (unattended-upgrades)
+- [x] NSG allows only SSH (port 22) from administrator IP and Minecraft (port 25565) publicly
+- [x] SSH password authentication disabled; key-based auth only
+- [x] Linux firewall (UFW) configured with default-deny inbound policy
+- [x] SSH root login disabled
+- [x] fail2ban active for SSH brute-force protection
+- [x] Automatic security updates enabled (unattended-upgrades)
 
 ### Operational Requirements
 - [ ] Daily automated backups of world data to Azure Blob Storage (cron + Azure CLI)
@@ -89,3 +89,43 @@ Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up
 - ✅ Static public IP provisioned: pip-minecraft-dev-scus
 - ✅ Network interface (NIC) created for VM attachment
 - ✅ Network architecture documented
+
+## Day 3 Progress
+
+- ✅ Compute module created with full VM specification
+- ✅ VM deployed: vm-minecraft-dev-scus (Standard_D2as_v6)
+- ✅ Ubuntu 22.04 LTS (Gen2) with SSH key authentication
+- ✅ 30 GB StandardSSD_LRS OS disk
+- ✅ Network interface attached to subnet
+- ✅ SSH access validated from admin workstation
+- ✅ Overcame Azure capacity constraints through SKU discovery
+
+## Day 4 Progress
+
+- ✅ Ansible project structure initialized
+  - ansible.cfg with optimizations (pipelining, fact caching)
+  - inventory/hosts.ini with VM connection details
+  - playbooks/site.yml with role orchestration
+- ✅ Ansible connectivity validated (ping test, facts gathering)
+- ✅ system_hardening role implemented (12 tasks, 3 handlers)
+- ✅ Security packages installed:
+  - fail2ban (intrusion prevention)
+  - unattended-upgrades (automated patching)
+  - ufw (host firewall)
+- ✅ fail2ban configured:
+  - SSH jail active and monitoring
+  - 5 failures in 10 minutes = 10 minute ban
+- ✅ unattended-upgrades configured:
+  - Daily security/stable update checks
+  - Auto-reboot at 3 AM if kernel updated
+- ✅ UFW firewall deployed:
+  - Default-deny inbound policy
+  - SSH (22/tcp) rate-limited
+  - Minecraft (25565/tcp) allowed
+- ✅ SSH hardened:
+  - Root login disabled
+  - Password authentication disabled
+  - Key-only authentication enforced
+  - Max 3 auth attempts
+  - 30 second login grace time
+- ✅ All security services validated and enabled on boot

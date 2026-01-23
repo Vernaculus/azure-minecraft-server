@@ -1,0 +1,73 @@
+---
+# Main playbook for Minecraft server configuration
+# Orchestrates all roles in the correct order
+# Usage: ansible-playbook -i ../inventory/hosts.ini site.yml
+
+# Target the minecraft_servers group from inventory
+- name: Configure Minecraft server infrastructure
+  hosts: minecraft_servers
+  
+  # Become root to perform system-level changes
+  become: true
+  
+  # Variables available to all roles in this playbook
+  vars:
+    # Minecraft server settings
+    minecraft_version: "1.21.1"
+    minecraft_port: 25565
+    
+    # System hardening settings
+    ssh_port: 22
+    allowed_ssh_users: "mcadmin"
+    
+    # Backup configuration
+    backup_enabled: true
+    backup_retention_days: 7
+  
+  # Pre-tasks run before any roles
+  pre_tasks:
+    # Update apt cache to ensure latest package information
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags:
+        - always
+    
+    # Display the target server for verification
+    - name: Display target server information
+      ansible.builtin.debug:
+        msg: "Configuring {{ inventory_hostname }} ({{ ansible_host }})"
+      tags:
+        - always
+  
+  # Roles execute in order listed
+  roles:
+    # Role 1: System hardening (UFW, fail2ban, SSH)
+    - role: system_hardening
+      tags:
+        - hardening
+        - security
+    
+    # Role 2: Install and configure Minecraft server (Day 5)
+    - role: minecraft_server
+      tags:
+        - minecraft
+        - application
+      when: false  # Disabled until Day 5
+    
+    # Role 3: Configure automated backups (Day 5)
+    - role: backup_to_blob
+      tags:
+        - backup
+        - storage
+      when: false  # Disabled until Day 5
+  
+  # Post-tasks run after all roles complete
+  post_tasks:
+    # Verify the system is ready
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: "Configuration complete on {{ inventory_hostname }}"
+      tags:
+        - always

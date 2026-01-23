@@ -1,0 +1,43 @@
+---
+# System Hardening Role - Handlers
+# Handlers are triggered by 'notify' directives in tasks
+# They run AFTER all tasks complete (not immediately)
+
+# ==============================================================================
+# HANDLER: Restart fail2ban
+# ==============================================================================
+# Triggered when: /etc/fail2ban/jail.local changes
+# Why restart needed: fail2ban must reload config to apply new rules
+# Safe to restart: Existing bans persist, no disruption
+# ==============================================================================
+
+- name: restart fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: restarted
+
+# ==============================================================================
+# HANDLER: Restart unattended-upgrades
+# ==============================================================================
+# Triggered when: /etc/apt/apt.conf.d/50unattended-upgrades changes
+# Why restart needed: Service must reload config to apply new update schedule
+# ==============================================================================
+
+- name: restart unattended-upgrades
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    state: restarted
+
+# ==============================================================================
+# HANDLER: Restart SSH Daemon
+# ==============================================================================
+# Triggered when: /etc/ssh/sshd_config changes
+# Why restart needed: SSH must reload config to enforce new security rules
+# CRITICAL: Config syntax is validated BEFORE this handler runs (prevents lockout)
+# ==============================================================================
+
+- name: restart sshd
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
+
