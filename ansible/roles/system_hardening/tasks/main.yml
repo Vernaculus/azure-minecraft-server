@@ -51,6 +51,10 @@
       # Interactive process viewer (better than 'top')
       # Useful for monitoring server performance
       - htop
+
+      # Network mapper for port scanning and diagnostics
+      # Useful for validating firewall rules and connectivity
+      - nmap
     
     # Ensure packages are present (install if missing, skip if already installed)
     state: present
@@ -1083,44 +1087,86 @@
       #!/bin/bash
       # Manual Scheduled Reboot with Player Countdown
       # Usage: scheduled-reboot.sh [minutes] (default: 10)
-      #
-      # Created by: Ansible (system_hardening role)
-      # Purpose: Admin-initiated server reboots with player notification
-      
+
       set -euo pipefail
-      
-      # ==============================================================================
+
       # Configuration
-      # ==============================================================================
-      
-      # Countdown duration (minutes)
-      # Default 10 minutes if not specified
-      # Override: sudo scheduled-reboot.sh 5
       MINUTES=${1:-10}
-      
-      # RCON password file (same as check-reboot-required script)
       RCON_PASSWORD_FILE="/opt/minecraft/rcon_password"
-      
-      # Syslog tag
       LOG_TAG="scheduled-reboot"
-      
-      # ==============================================================================
-      # Early Exit if Minecraft Not Configured
-      # ==============================================================================
-      
-      # If RCON not configured yet, skip Minecraft integration
-      # Useful for initial deployments before Minecraft installed
+
+      # Early exit if RCON not configured
       if [ ! -f "$RCON_PASSWORD_FILE" ]; then
           echo "ERROR: Minecraft RCON not configured yet"
           echo "Stopping Minecraft and rebooting immediately..."
-          
-          # Try to stop Minecraft (ignore errors if not running)
           systemctl stop minecraft 2>/dev/null || true
           sleep 5
           reboot
           exit
       fi
-      
-      # Read RCON password from file
-      RCON_PASSWORD=$(ca
 
+      # Read RCON password from file
+      RCON_PASSWORD=$(cat "$RCON_PASSWORD_FILE")
+
+      # Functions
+      sendmsg() {
+          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say [ADMIN] $1" 2>/dev/null
+          logger -t "$LOG_TAG" "$1"
+      }
+
+      # Main
+      echo "==================================================="
+      echo "  Scheduled Reboot: $MINUTES minute countdown"
+      echo "==================================================="
+      echo ""
+
+      sendmsg "WARNING: Server restarting in $MINUTES minutes"
+      sendmsg "Reason: Maintenance/Updates - Please save your work!"
+
+      # Countdown
+      remaining=$MINUTES
+
+      while [ $remaining -gt 1 ]; do
+          sleep 60
+          remaining=$((remaining - 1))
+
+          if [ $remaining -eq 5 ] || [ $remaining -eq 4 ] || [ $remaining -eq 3 ] || [ $remaining -eq 2 ]; then
+              sendmsg "WARNING: Server restarting in $remaining minutes!"
+              echo "  - Warning sent: $remaining minutes"
+          fi
+      done
+
+      # Final minute
+      sendmsg "WARNING: Server restarting in 1 MINUTE! SAVE NOW!"
+      echo "  - 1 minute warning"
+      sleep 30
+
+      sendmsg "WARNING: 30 SECONDS!"
+      echo "  - 30 seconds"
+      sleep 20
+
+      sendmsg "WARNING: 10 SECONDS - LOGGING OUT RECOMMENDED!"
+      echo "  - 10 seconds"
+      sleep 7
+
+      sendmsg "Restarting in 3... 2... 1..."
+      sleep 3
+
+      echo ""
+      echo "Shutting down Minecraft server..."
+      systemctl stop minecraft
+      sleep 3
+
+      echo "Rebooting system..."
+      logger -t "$LOG_TAG" "System reboot initiated after $MINUTES minute countdown"
+      reboot
+
+    dest: /usr/local/bin/scheduled-reboot.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+  tags:
+    - updates
+    - maintenance
+    - minecraft
