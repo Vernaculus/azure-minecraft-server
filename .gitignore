@@ -59,3 +59,9 @@ id_rsa*
 .idea/
 *.swp
 *.swo
+
+# Local scripts dir
+/scripts/
+
+# Files marked as old
+*.old
