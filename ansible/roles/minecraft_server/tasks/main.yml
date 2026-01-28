@@ -55,6 +55,18 @@
     mode: '0644'
   notify: restart minecraft
 
+- name: Create RCON password file for system scripts
+  ansible.builtin.copy:
+    content: "{{ minecraft_rcon_password }}"
+    dest: /opt/minecraft/rcon_password
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  tags:
+    - minecraft
+    - security
+
 - name: Deploy systemd service
   ansible.builtin.template:
     src: minecraft.service.j2
