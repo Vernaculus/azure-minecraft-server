@@ -54,7 +54,6 @@
       tags:
         - minecraft
         - application
-      when: false  # Disabled until Day 5
     
     # Role 3: Configure automated backups (Day 5)
     - role: backup_to_blob
@@ -71,3 +70,4 @@
         msg: "Configuration complete on {{ inventory_hostname }}"
       tags:
         - always
+ 

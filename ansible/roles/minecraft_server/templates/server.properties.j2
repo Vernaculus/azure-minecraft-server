@@ -1,0 +1,39 @@
+# Minecraft Server Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# Server Identity
+server-name={{ minecraft_server_name }}
+motd={{ minecraft_motd }}
+
+# Network Settings
+server-port={{ minecraft_port }}
+enable-rcon=true
+rcon.port={{ minecraft_rcon_port }}
+rcon.password={{ minecraft_rcon_password }}
+online-mode={{ minecraft_online_mode | lower }}
+
+# Gameplay Settings
+max-players={{ minecraft_max_players }}
+difficulty={{ minecraft_difficulty }}
+gamemode={{ minecraft_gamemode }}
+pvp={{ minecraft_pvp | lower }}
+spawn-protection=16
+max-world-size=29999984
+
+# Performance
+view-distance=10
+simulation-distance=10
+spawn-monsters=true
+spawn-animals=true
+spawn-npcs=true
+
+# World Generation
+level-name=world
+level-type=minecraft\:normal
+generate-structures=true
+
+# Misc
+allow-flight=false
+enforce-whitelist=false
+white-list=false
+
