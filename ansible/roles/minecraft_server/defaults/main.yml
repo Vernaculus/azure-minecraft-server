@@ -33,7 +33,7 @@ minecraft_online_mode: true
 
 # RCON security
 # Generate strong password: openssl rand -base64 32
-minecraft_rcon_password: "CHANGE_ME_IN_PRODUCTION"
+minecraft_rcon_password: ""  # Retrieved from Azure Key Vault in playbook pre-tasks
 
 # Server identity
 minecraft_motd: "Azure Minecraft Server - Managed by Ansible"
