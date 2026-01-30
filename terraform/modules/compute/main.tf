@@ -60,7 +60,35 @@ resource "azurerm_linux_virtual_machine" "main" {
     version = "latest"
   }
 
+  # ADDED: Enable system-assigned managed identity
+  # This creates an Azure AD identity for the VM automatically
+  # No credentials to manage - Azure handles authentication via metadata endpoint
+  # VM can use this identity to authenticate to Key Vault and retrieve secrets
+  identity {
+    type = "SystemAssigned"
+  }
+
   # Apply governance tags
   tags = var.tags
+}
+
+# ============================================================================
+# RBAC: Grant VM Managed Identity Access to Key Vault
+# ============================================================================
+
+# Grant VM's managed identity "Key Vault Secrets User" role
+# This allows the VM to READ secrets but NOT modify/delete them (least-privilege)
+# VM uses Azure Instance Metadata Service (IMDS) to authenticate to Key Vault
+resource "azurerm_role_assignment" "vm_keyvault_access" {
+  # Scope: Grant access only to this specific Key Vault (not subscription-wide)
+  scope = var.key_vault_id
+
+  # Built-in Azure role for reading secrets (no write/delete permissions)
+  # Role ID: 4633458b-17de-408a-b874-0445c86b69e6
+  role_definition_name = "Key Vault Secrets User"
+
+  # Principal: VM's system-assigned managed identity
+  # Azure automatically populates this after VM creation
+  principal_id = azurerm_linux_virtual_machine.main.identity[0].principal_id
 }
 

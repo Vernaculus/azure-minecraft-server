@@ -64,3 +64,10 @@ variable "tags" {
   type        = map(string)
 }
 
+# ADDED: Key Vault ID for RBAC role assignment
+# Passed from root module after keyvault module creates the vault
+variable "key_vault_id" {
+  description = "ID of the Key Vault for managed identity access"
+  type        = string
+}
+
