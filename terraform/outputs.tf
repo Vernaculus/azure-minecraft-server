@@ -57,3 +57,21 @@ output "vm_private_ip" {
   value       = module.compute.private_ip_address
 }
 
+# ADDED: Key Vault name for Ansible inventory/documentation
+output "key_vault_name" {
+  description = "Name of the Azure Key Vault"
+  value       = module.keyvault.key_vault_name
+}
+
+# ADDED: Key Vault URI for Ansible azure_keyvault_secret lookup
+output "key_vault_uri" {
+  description = "URI of the Azure Key Vault (for Ansible secret retrieval)"
+  value       = module.keyvault.key_vault_uri
+}
+
+# ADDED: RCON secret name for Ansible playbook reference
+output "rcon_secret_name" {
+  description = "Name of the RCON password secret in Key Vault"
+  value       = module.keyvault.rcon_secret_name
+}
+
