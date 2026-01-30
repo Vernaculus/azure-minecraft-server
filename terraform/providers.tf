@@ -13,6 +13,15 @@ terraform {
       # Use version 4.x (any 4.x release, but not 5.0+)
       version = "~> 4.0"
     }
+
+    # ADDED: Random provider for generating secure passwords
+    random = {
+      # Official HashiCorp provider source
+      source = "hashicorp/random"
+
+      # Use version 3.6.x (latest stable)
+      version = "~> 3.6"
+    }
   }
 }
 

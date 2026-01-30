@@ -44,7 +44,7 @@ variable "tags" {
 variable "vm_size" {
   description = "Azure VM SKU for the Minecraft server"
   type        = string
-  default     = "Standard_D2as_v6"  # AMD EPYC v6, available now
+  default     = "Standard_D2as_v6" # AMD EPYC v6, available now
 }
 
 # SSH public key for VM authentication
@@ -103,5 +103,12 @@ variable "os_disk_type" {
   description = "Storage account type for OS disk"
   type        = string
   default     = "StandardSSD_LRS"
+}
+
+# ADDED: Short location code for naming (scus = South Central US)
+variable "location_short" {
+  description = "Short code for Azure region (used in resource naming)"
+  type        = string
+  default     = "scus"
 }
 
