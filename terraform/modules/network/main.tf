@@ -29,6 +29,9 @@ resource "azurerm_subnet" "app" {
 
   # Subnet IP range (subset of VNet address space)
   address_prefixes = var.subnet_app_prefix
+
+  # Allows subnet resources to securely access Key Vault via Azure backbone
+  service_endpoints = ["Microsoft.KeyVault"]
 }
 
 # Creates Network Security Group (NSG) for subnet-level firewall

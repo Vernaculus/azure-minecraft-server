@@ -29,6 +29,41 @@ module "network" {
   tags                = var.tags
 }
 
+# Generate secure random password for RCON
+# 24 characters with letters, numbers, and symbols
+resource "random_password" "rcon" {
+  length  = 24
+  special = true
+  # Exclude ambiguous characters to avoid manual entry errors
+  override_special = "!@#$%^&*()-_=+[]{}|;:,.<>?"
+}
+
+# Deploy Azure Key Vault module
+module "keyvault" {
+  source = "./modules/keyvault"
+
+  # Naming follows Azure conventions: kv-{app}-{env}-{region}
+  key_vault_name      = "kv-minecraft-${var.environment}-${var.location_short}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name # FIXED: was module.resource_group.name
+
+  # Restrict Key Vault access to VM subnet only
+  subnet_id = module.network.subnet_id
+
+  # Store generated RCON password in Key Vault
+  rcon_password = random_password.rcon.result
+
+ # Allow admin workstation access to Key Vault
+ admin_source_ip     = var.admin_source_ip
+
+  # Apply consistent tagging
+  tags = var.tags
+
+  # Ensure Key Vault is created after network exists
+  depends_on = [module.network]
+}
+
+
 # Calls the compute module to create the VM
 module "compute" {
   # Path to the compute module directory
@@ -46,4 +81,11 @@ module "compute" {
   project_name         = var.project_name
   environment          = var.environment
   tags                 = var.tags
+
+  # ADDED: Pass Key Vault ID to compute module for RBAC assignment
+  key_vault_id = module.keyvault.key_vault_id
+
+  # ADDED: Ensure VM is created after Key Vault exists
+  depends_on = [module.keyvault]
 }
+
