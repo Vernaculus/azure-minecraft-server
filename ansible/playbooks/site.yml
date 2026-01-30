@@ -40,6 +40,79 @@
         msg: "Configuring {{ inventory_hostname }} ({{ ansible_host }})"
       tags:
         - always
+    
+    # Install Python package manager for Azure SDK dependencies
+    - name: Install pip3 for Python package management
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+        update_cache: true
+      tags:
+        - keyvault
+        - dependencies
+    
+    # Install Azure SDK libraries for Key Vault access
+    # These libraries enable Python scripts on the VM to authenticate with Azure
+    - name: Install Azure SDK for Python (managed identity + Key Vault)
+      ansible.builtin.pip:
+        name:
+          - azure-identity
+          - azure-keyvault-secrets
+        state: present
+        executable: pip3
+      tags:
+        - keyvault
+        - dependencies
+    
+    # Request OAuth token from Azure Instance Metadata Service (IMDS)
+    # IMDS is only accessible from inside Azure VMs at 169.254.169.254
+    # The token proves the VM's managed identity to Azure Key Vault
+    - name: Get OAuth token from Azure IMDS for Key Vault authentication
+      ansible.builtin.uri:
+        url: "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net"
+        method: GET
+        headers:
+          Metadata: "true"
+        return_content: true
+        status_code: 200
+      register: imds_token_response
+      tags:
+        - keyvault
+        - secrets
+    
+    # Extract access token from IMDS response for Key Vault authentication
+    - name: Set Key Vault access token from IMDS response
+      ansible.builtin.set_fact:
+        keyvault_access_token: "{{ imds_token_response.json.access_token }}"
+      no_log: true
+      tags:
+        - keyvault
+        - secrets
+    
+    # Retrieve RCON password from Key Vault using managed identity token
+    # Key Vault validates RBAC permissions before returning the secret
+    - name: Retrieve RCON password from Azure Key Vault
+      ansible.builtin.uri:
+        url: "https://kv-minecraft-dev-scus.vault.azure.net/secrets/minecraft-rcon-password?api-version=7.4"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keyvault_access_token }}"
+        return_content: true
+        status_code: 200
+      register: keyvault_secret_response
+      no_log: true
+      tags:
+        - keyvault
+        - secrets
+    
+    # Extract secret value and make it available to all roles
+    - name: Set RCON password fact from Key Vault secret
+      ansible.builtin.set_fact:
+        minecraft_rcon_password: "{{ keyvault_secret_response.json.value }}"
+      no_log: true
+      tags:
+        - keyvault
+        - secrets
   
   # Roles execute in order listed
   roles:
@@ -70,4 +143,4 @@
         msg: "Configuration complete on {{ inventory_hostname }}"
       tags:
         - always
- 
+
