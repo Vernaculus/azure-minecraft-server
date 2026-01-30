@@ -74,26 +74,70 @@ Permissions Required:
 
 ### 2. Ansible Playbook (VM Managed Identity)
 
-Authentication: VM's system-assigned managed identity via IMDS
+Authentication: VM's system-assigned managed identity via IMDS (Instance Metadata Service)
 
-Example - Secret Retrieval:
+The Ansible playbook retrieves secrets using a three-step REST API workflow:
 
-    - name: Retrieve RCON password from Key Vault
-      set_fact:
-        rcon_password: "{{ lookup('azure.azcollection.azure_keyvault_secret', 'minecraft-rcon-password', vault_url='https://kv-minecraft-dev-scus.vault.azure.net/') }}"
+#### Step 1: Request OAuth Token from IMDS
+
+    - name: Get OAuth token from Azure IMDS for Key Vault authentication
+      ansible.builtin.uri:
+        url: "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net"
+        method: GET
+        headers:
+          Metadata: "true"
+        return_content: true
+        status_code: 200
+      register: imds_token_response
+      tags:
+        - keyvault
+        - secrets
+
+#### Step 2: Extract Access Token
+
+    - name: Set Key Vault access token from IMDS response
+      ansible.builtin.set_fact:
+        keyvault_access_token: "{{ imds_token_response.json.access_token }}"
       no_log: true
+      tags:
+        - keyvault
+        - secrets
 
-    - name: Create RCON password file
-      copy:
-        content: "{{ rcon_password }}"
-        dest: /opt/minecraft/rcon_password
-        owner: root
-        group: root
-        mode: '0600'
+#### Step 3: Retrieve Secret from Key Vault
+
+    - name: Retrieve RCON password from Azure Key Vault
+      ansible.builtin.uri:
+        url: "https://kv-minecraft-dev-scus.vault.azure.net/secrets/minecraft-rcon-password?api-version=7.4"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keyvault_access_token }}"
+        return_content: true
+        status_code: 200
+      register: keyvault_secret_response
       no_log: true
+      tags:
+        - keyvault
+        - secrets
+
+#### Step 4: Extract Secret Value and Deploy
+
+    - name: Set RCON password fact from Key Vault secret
+      ansible.builtin.set_fact:
+        minecraft_rcon_password: "{{ keyvault_secret_response.json.value }}"
+      no_log: true
+      tags:
+        - keyvault
+        - secrets
+
+**Why REST API Instead of azure.azcollection Module?**
+
+- IMDS endpoint (169.254.169.254) is only accessible from inside the VM
+- The azure.azcollection modules run on the Ansible control node (workstation)
+- REST API approach ensures authentication happens on the VM using managed identity
+- No Azure SDK required on the control node (simpler dependency management)
 
 Permissions Required:
-- Microsoft.KeyVault/vaults/secrets/getSecret/action
+- Microsoft.KeyVault/vaults/secrets/getSecret/action (Key Vault Secrets User role)
 
 ### 3. Manual Azure CLI Access
 
