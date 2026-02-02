@@ -34,7 +34,7 @@ Phase 5 focused on fixing critical RCON security and automation bugs discovered 
 
 ### Issue 3: RCON Bind Address Investigation (SECURITY RESEARCH)
 **Attempted Fix:** Add `rcon.bind=127.0.0.1` to restrict RCON to localhost  
-**Finding:** Minecraft Java Edition 1.21.1 **does NOT support** `rcon.bind` directive  
+**Finding:** Minecraft Java Edition 1.21.11 **does NOT support** `rcon.bind` directive  
 **Reality:** RCON always binds to `0.0.0.0:25575` (all interfaces) regardless of configuration  
 **Security Validation:** 
 - Ran `nmap -p 25575 -Pn 4.150.29.71` from external network
