@@ -2,7 +2,7 @@
 
 ## Scope
 
-Deploy a production-grade Minecraft 1.21.1 vanilla server on Azure supporting up to 10 concurrent players. Implement Infrastructure as Code (Terraform), configuration management (Ansible), security hardening (Azure NSG, Linux UFW, SSH), automated backups to Azure Blob Storage, and basic monitoring. Demonstrate AZ-104 Azure Administrator competencies across compute, networking, storage, identities & governance, and monitoring domains.
+Deploy a production-grade Minecraft 1.21.11 vanilla server on Azure supporting up to 10 concurrent players. Implement Infrastructure as Code (Terraform), configuration management (Ansible), security hardening (Azure NSG, Linux UFW, SSH), automated backups to Azure Blob Storage, and basic monitoring. Demonstrate AZ-104 Azure Administrator competencies across compute, networking, storage, identities & governance, and monitoring domains.
 
 ## Technical Stack
 

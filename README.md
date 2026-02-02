@@ -51,7 +51,7 @@ This is a learning project that deploys a production-ready Minecraft server on A
 - Operations: Intelligent reboot manager (auto-reboot if no players, countdown if active)
 
 ### Phase 5: Complete - Minecraft Server & Bug Fixes (Jan 28, 2026)
-- Minecraft 1.21.1 server deployed with systemd service
+- Minecraft 1.21.11 server deployed with systemd service
 - RCON integration for automated management
 - Fixed critical automation bugs (player detection, RCON auth)
 - Security validated: RCON protected by UFW firewall
