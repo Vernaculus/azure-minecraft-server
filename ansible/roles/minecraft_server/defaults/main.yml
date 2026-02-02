@@ -2,9 +2,9 @@
 # Minecraft Server Role - Default Variables
 # Override these in playbooks/site.yml or inventory
 
-# Minecraft server version
-minecraft_version: "1.21.1"
-minecraft_jar_url: "https://piston-data.mojang.com/v1/objects/59353fb40c36d304f2035d51e7d6e6baa98dc05c/server.jar"
+# Minecraft server version (UPGRADED TO 1.21.11)
+minecraft_version: "1.21.11"
+minecraft_jar_url: "https://piston-data.mojang.com/v1/objects/64bb6d763bed0a9f1d632ec347938594144943ed/server.jar"
 
 # Server resource allocation
 minecraft_min_memory: "6G"
@@ -38,3 +38,4 @@ minecraft_rcon_password: ""  # Retrieved from Azure Key Vault in playbook pre-ta
 # Server identity
 minecraft_motd: "Azure Minecraft Server - Managed by Ansible"
 minecraft_server_name: "minecraft-server"
+

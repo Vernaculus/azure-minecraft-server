@@ -12,8 +12,9 @@
   
   # Variables available to all roles in this playbook
   vars:
-    # Minecraft server settings
-    minecraft_version: "1.21.1"
+    # Minecraft server settings (UPGRADED TO 1.21.11)
+    minecraft_version: "1.21.11"
+    minecraft_jar_url: "https://piston-data.mojang.com/v1/objects/64bb6d763bed0a9f1d632ec347938594144943ed/server.jar"
     minecraft_port: 25565
     
     # System hardening settings
