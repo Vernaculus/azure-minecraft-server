@@ -61,7 +61,8 @@ id_rsa*
 *.swo
 
 # Local scripts dir
-/scripts/
+# Including in repo for now.
+#/scripts/
 
 # Files marked as old
 *.old
