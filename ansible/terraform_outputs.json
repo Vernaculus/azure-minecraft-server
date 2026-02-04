@@ -1,0 +1,77 @@
+{
+  "backup_container_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "minecraft-backups"
+  },
+  "blob_endpoint": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://stmcbackupdev2o7f0p.blob.core.windows.net/"
+  },
+  "key_vault_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "kv-minecraft-dev-scus"
+  },
+  "key_vault_uri": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://kv-minecraft-dev-scus.vault.azure.net/"
+  },
+  "location": {
+    "sensitive": false,
+    "type": "string",
+    "value": "southcentralus"
+  },
+  "minecraft_public_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "4.150.29.71"
+  },
+  "rcon_secret_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "minecraft-rcon-password"
+  },
+  "resource_group_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "/subscriptions/0f301489-a996-4d99-baed-708b602a4aad/resourceGroups/rg-minecraft-dev-scus"
+  },
+  "resource_group_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "rg-minecraft-dev-scus"
+  },
+  "storage_account_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "stmcbackupdev2o7f0p"
+  },
+  "subnet_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "/subscriptions/0f301489-a996-4d99-baed-708b602a4aad/resourceGroups/rg-minecraft-dev-scus/providers/Microsoft.Network/virtualNetworks/vnet-minecraft-dev-scus/subnets/snet-minecraft-app"
+  },
+  "vm_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "/subscriptions/0f301489-a996-4d99-baed-708b602a4aad/resourceGroups/rg-minecraft-dev-scus/providers/Microsoft.Compute/virtualMachines/vm-minecraft-dev-scus"
+  },
+  "vm_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "vm-minecraft-dev-scus"
+  },
+  "vm_private_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "10.10.1.4"
+  },
+  "vnet_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "/subscriptions/0f301489-a996-4d99-baed-708b602a4aad/resourceGroups/rg-minecraft-dev-scus/providers/Microsoft.Network/virtualNetworks/vnet-minecraft-dev-scus"
+  }
+}
