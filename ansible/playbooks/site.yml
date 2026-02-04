@@ -21,9 +21,10 @@
     ssh_port: 22
     allowed_ssh_users: "mcadmin"
     
-    # Backup configuration
+    # Azure blob storage backup variables
     backup_enabled: true
     backup_retention_days: 7
+    backup_container_name: "minecraft-backups"
   
   # Pre-tasks run before any roles
   pre_tasks:
@@ -134,7 +135,7 @@
       tags:
         - backup
         - storage
-      when: false  # Disabled until Day 5
+      when: true
   
   # Post-tasks run after all roles complete
   post_tasks:
