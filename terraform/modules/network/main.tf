@@ -31,7 +31,8 @@ resource "azurerm_subnet" "app" {
   address_prefixes = var.subnet_app_prefix
 
   # Allows subnet resources to securely access Key Vault via Azure backbone
-  service_endpoints = ["Microsoft.KeyVault"]
+  service_endpoints = ["Microsoft.KeyVault", "Microsoft.Storage"]
+
 }
 
 # Creates Network Security Group (NSG) for subnet-level firewall
