@@ -1,0 +1,13 @@
+---
+# Backup Role - Default Variables
+
+# Azure Storage settings (from Terraform)
+backup_storage_account_name: "stmcbackupdev2o7f0p"
+backup_container_name: "minecraft-backups"
+
+# Backup paths
+minecraft_home: "/opt/minecraft"
+backup_script_path: "/usr/local/bin/minecraft-backup.sh"
+
+# Retention (enforced by Azure lifecycle policy, not script)
+backup_retention_days: 7
