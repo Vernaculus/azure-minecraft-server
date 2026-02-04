@@ -53,8 +53,8 @@ module "keyvault" {
   # Store generated RCON password in Key Vault
   rcon_password = random_password.rcon.result
 
- # Allow admin workstation access to Key Vault
- admin_source_ip     = var.admin_source_ip
+  # Allow admin workstation access to Key Vault
+  admin_source_ip = var.admin_source_ip
 
   # Apply consistent tagging
   tags = var.tags
@@ -82,10 +82,33 @@ module "compute" {
   environment          = var.environment
   tags                 = var.tags
 
-  # ADDED: Pass Key Vault ID to compute module for RBAC assignment
+  # Pass Key Vault ID to compute module for RBAC assignment
   key_vault_id = module.keyvault.key_vault_id
 
-  # ADDED: Ensure VM is created after Key Vault exists
+  # Ensure VM is created after Key Vault exists
   depends_on = [module.keyvault]
+}
+
+# Generate random suffix for globally unique storage account name
+# Storage account names must be globally unique across all of Azure
+resource "random_string" "suffix" {
+  length  = 6
+  special = false
+  upper   = false
+  # Results in 6 lowercase alphanumeric characters (e.g., "a7k3m9")
+}
+
+# Storage Account for backups
+module "storage" {
+  source = "./modules/storage"
+
+  storage_account_name             = "stmcbackupdev${random_string.suffix.result}"
+  resource_group_name              = azurerm_resource_group.main.name
+  location                         = var.location
+  vm_subnet_id                     = module.network.subnet_id
+  admin_source_ip                  = var.admin_source_ip
+  vm_managed_identity_principal_id = module.compute.vm_identity_principal_id
+
+  tags = var.tags
 }
 
