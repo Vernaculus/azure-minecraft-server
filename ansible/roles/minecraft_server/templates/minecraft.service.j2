@@ -1,6 +1,6 @@
 [Unit]
 Description=Minecraft Server
-After=network.target
+After=minecraft-backup.service  # Wait for backup to finish
 
 [Service]
 Type=simple
@@ -33,6 +33,7 @@ ExecStart=/usr/bin/java -Xms{{ minecraft_min_memory }} -Xmx{{ minecraft_max_memo
 
 # Graceful shutdown (save world before stopping)
 ExecStop=/bin/kill -SIGTERM $MAINPID
+  ExecStopPost=/usr/local/bin/minecraft-backup.sh --event=shutdown
 TimeoutStopSec=60
 
 # Restart on failure

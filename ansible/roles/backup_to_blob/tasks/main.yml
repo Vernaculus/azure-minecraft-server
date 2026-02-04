@@ -1,0 +1,248 @@
+---
+# Backup to Azure Blob Storage - Tasks
+# Runs BEFORE Minecraft starts on boot with duplicate prevention
+
+- name: Add Microsoft GPG key
+  ansible.builtin.get_url:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    dest: /usr/share/keyrings/microsoft-archive-keyring.asc
+    mode: '0644'
+  tags:
+    - backup
+    - packages
+
+- name: Add Microsoft repository for azcopy
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.asc] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
+    state: present
+    filename: microsoft-azure-cli
+  tags:
+    - backup
+    - packages
+
+- name: Install azcopy from Microsoft repository
+  ansible.builtin.apt:
+    name: azcopy
+    state: present
+    update_cache: true
+  tags:
+    - backup
+    - packages
+
+- name: Install jq for JSON parsing
+  ansible.builtin.apt:
+    name: jq
+    state: present
+    update_cache: true
+  tags:
+    - backup
+    - packages
+
+- name: Create intelligent backup script
+  ansible.builtin.copy:
+    dest: "{{ backup_script_path }}"
+    owner: root
+    group: root
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      # Minecraft Hybrid Backup to Azure Blob Storage
+      # Runs on BOTH boot (before start) and shutdown (after stop)
+      # Event-based deduplication prevents unnecessary backups
+      
+      set -euo pipefail
+      
+      MINECRAFT_HOME="{{ minecraft_home }}"
+      STORAGE_ACCOUNT="{{ backup_storage_account_name }}"
+      CONTAINER="{{ backup_container_name }}"
+      LOG_TAG="minecraft-backup"
+      
+      BOOT_TIMESTAMP_FILE="/var/lib/minecraft-last-boot-backup"
+      SHUTDOWN_TIMESTAMP_FILE="/var/lib/minecraft-last-shutdown-backup"
+      
+      EVENT=""
+      for arg in "$@"; do
+        case $arg in
+          --event=*)
+            EVENT="${arg#*=}"
+            shift
+            ;;
+        esac
+      done
+      
+      if [[ "$EVENT" != "boot" && "$EVENT" != "shutdown" ]]; then
+        echo "ERROR: Invalid or missing --event parameter"
+        echo "Usage: $0 --event=boot|shutdown"
+        exit 1
+      fi
+      
+      if [[ "$EVENT" == "boot" ]]; then
+        TIMESTAMP_FILE="$BOOT_TIMESTAMP_FILE"
+      else
+        TIMESTAMP_FILE="$SHUTDOWN_TIMESTAMP_FILE"
+      fi
+      
+      log() {
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [$EVENT] - $1" | tee -a /var/log/minecraft-backup.log >&2
+        logger -t "$LOG_TAG" "[$EVENT] $1"
+      }
+
+      check_backup_needed() {
+        if [[ "$EVENT" == "shutdown" ]]; then
+          log "Shutdown event - backup will run regardless of timestamp"
+          return 0
+        fi
+        
+        if [[ -f "$TIMESTAMP_FILE" ]]; then
+          LAST_BACKUP=$(cat "$TIMESTAMP_FILE")
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          
+          if [[ "$LAST_BACKUP" == "$CURRENT_DATE" ]]; then
+            log "Boot backup already completed today ($CURRENT_DATE). Skipping."
+            exit 0
+          fi
+        fi
+        
+        log "Boot event - no backup found for today. Proceeding..."
+      }
+      
+      get_azure_token() {
+        log "Authenticating with Azure using managed identity..."
+        
+        azcopy login --identity 2>&1 | while read line; do
+          log "$line"
+        done
+        
+        if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+          log "Authentication successful"
+        else
+          log "ERROR: Failed to authenticate with managed identity"
+          exit 1
+        fi
+      }
+      
+      create_backup() {
+        BACKUP_NAME="minecraft-world-${EVENT}-$(date +%Y%m%d-%H%M%S).tar.gz"
+        BACKUP_PATH="/tmp/$BACKUP_NAME"
+        
+        log "Creating backup archive: $BACKUP_NAME"
+        
+        if [[ "$EVENT" == "boot" ]]; then
+          log "NOTE: Minecraft is not running - backing up previous session data"
+        else
+          log "NOTE: Minecraft has stopped - backing up current session data"
+        fi
+        
+        if [[ ! -d "$MINECRAFT_HOME/world" ]]; then
+          log "WARNING: World directory not found. This may be first boot."
+          exit 0
+        fi
+        
+        tar -czf "$BACKUP_PATH" \
+          -C "$MINECRAFT_HOME" \
+          world/ \
+          server.properties \
+          banned-ips.json \
+          banned-players.json \
+          ops.json \
+          whitelist.json \
+          usercache.json \
+          2>/dev/null || true
+        
+        BACKUP_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
+        log "Backup created: $BACKUP_PATH ($BACKUP_SIZE)"
+        
+        echo "$BACKUP_PATH"
+      }
+      
+      upload_backup() {
+        local BACKUP_PATH=$1
+        local BACKUP_NAME=$(basename "$BACKUP_PATH")
+        local BLOB_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER}/${BACKUP_NAME}"
+        
+        log "Uploading to Azure Blob Storage..."
+        
+        azcopy copy \
+          "$BACKUP_PATH" \
+          "$BLOB_URL" \
+          --check-md5 FailIfDifferent \
+          --log-level ERROR
+        
+        if [[ $? -eq 0 ]]; then
+          log "Upload successful: $BLOB_URL"
+        else
+          log "ERROR: Upload failed"
+          exit 1
+        fi
+        
+        rm -f "$BACKUP_PATH"
+        log "Local backup cleaned up"
+      }
+      
+      record_timestamp() {
+        date +%Y-%m-%d > "$TIMESTAMP_FILE"
+        log "Timestamp recorded to $TIMESTAMP_FILE"
+      }
+      
+      main() {
+        log "===== Minecraft ${EVENT^} Backup Started ====="
+        
+        check_backup_needed
+        get_azure_token
+        BACKUP_PATH=$(create_backup)
+        upload_backup "$BACKUP_PATH"
+        record_timestamp
+        
+        log "===== ${EVENT^} Backup Completed Successfully ====="
+      }
+      
+      main
+  tags:
+    - backup
+
+- name: Create backup systemd service
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Minecraft Daily Backup to Azure Blob
+      Before=minecraft.service
+      After=network-online.target
+      Wants=network-online.target
+      PartOf=minecraft.service
+      
+      [Service]
+      Type=oneshot
+      User=root
+      ExecStart={{ backup_script_path }} --event=boot
+      StandardOutput=journal
+      StandardError=journal
+      RemainAfterExit=yes
+      
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/minecraft-backup.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload systemd
+  tags:
+    - backup
+
+- name: Enable backup service to run on boot
+  ansible.builtin.systemd:
+    name: minecraft-backup.service
+    enabled: true
+    daemon_reload: true
+  tags:
+    - backup
+
+- name: Create backup log file
+  ansible.builtin.file:
+    path: /var/log/minecraft-backup.log
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - backup
+
