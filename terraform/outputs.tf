@@ -75,3 +75,18 @@ output "rcon_secret_name" {
   value       = module.keyvault.rcon_secret_name
 }
 
+# Storage Account Outputs
+output "storage_account_name" {
+  description = "Storage account for backups"
+  value       = module.storage.storage_account_name
+}
+
+output "backup_container_name" {
+  description = "Blob container for Minecraft backups"
+  value       = module.storage.container_name
+}
+
+output "blob_endpoint" {
+  description = "Blob storage endpoint"
+  value       = module.storage.blob_endpoint
+}
