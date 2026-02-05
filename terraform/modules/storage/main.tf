@@ -24,6 +24,27 @@ resource "azurerm_storage_account" "backups" {
   tags = var.tags
 }
 
+# Lifecycle Management Policy - Auto-delete backups older than 7 days
+resource "azurerm_storage_management_policy" "backup_retention" {
+  storage_account_id = azurerm_storage_account.backups.id
+
+  rule {
+    name    = "delete-old-minecraft-backups"
+    enabled = true
+
+    filters {
+      blob_types   = ["blockBlob"]
+      prefix_match = ["minecraft-backups/minecraft-world"]
+    }
+
+    actions {
+      base_blob {
+        delete_after_days_since_modification_greater_than = 7
+      }
+    }
+  }
+}
+
 # Blob Container for world backups
 resource "azurerm_storage_container" "minecraft_backups" {
   name                  = "minecraft-backups"
