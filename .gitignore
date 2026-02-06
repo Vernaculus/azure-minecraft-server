@@ -60,9 +60,8 @@ id_rsa*
 *.swp
 *.swo
 
-# Local scripts dir
-# Including in repo for now.
-#/scripts/
+# scripts designated as local in scripts dir
+/scripts/local-*
 
 # Files marked as old
 *.old
