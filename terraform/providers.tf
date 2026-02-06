@@ -14,13 +14,19 @@ terraform {
       version = "~> 4.0"
     }
 
-    # ADDED: Random provider for generating secure passwords
+    # Random provider for generating secure passwords
     random = {
       # Official HashiCorp provider source
       source = "hashicorp/random"
 
       # Use version 3.6.x (latest stable)
       version = "~> 3.6"
+    }
+
+    # Time provider for delays and wait conditions
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
     }
   }
 }

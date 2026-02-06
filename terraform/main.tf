@@ -29,6 +29,15 @@ module "network" {
   tags                = var.tags
 }
 
+# Wait for service endpoint propagation
+# Azure service endpoints take 30-90 seconds to fully propagate
+# Without this delay, Key Vault network ACLs may fail to recognize subnet
+resource "time_sleep" "wait_for_service_endpoint" {
+  depends_on = [module.network]
+
+  create_duration = "90s"
+}
+
 # Generate secure random password for RCON
 # 24 characters with letters, numbers, and symbols
 resource "random_password" "rcon" {
