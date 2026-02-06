@@ -123,7 +123,13 @@
       tags:
         - hardening
         - security
-    
+   
+    # Role 1.5: Azure monitoring agent and log collection
+    - role: azure_monitoring
+      tags:
+        - monitoring
+        - observability
+
     # Role 2: Install and configure Minecraft server (Day 5)
     - role: minecraft_server
       tags:

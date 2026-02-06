@@ -1,0 +1,103 @@
+---
+# Azure Monitoring Role - Tasks
+# Configures log collection for Minecraft server
+# Note: Azure Monitor Agent is installed via Terraform VM extension
+
+# ============================================================================
+# CONFIGURE MINECRAFT LOG COLLECTION
+# ============================================================================
+# Configures systemd journal to forward minecraft.service logs
+# to syslog, which Azure Monitor Agent collects
+
+- name: Ensure minecraft log directory exists
+  ansible.builtin.file:
+    path: /var/log/minecraft
+    state: directory
+    owner: minecraft
+    group: minecraft
+    mode: '0755'
+  tags:
+    - monitoring
+    - logs
+
+- name: Configure rsyslog to forward minecraft logs
+  ansible.builtin.copy:
+    dest: /etc/rsyslog.d/30-minecraft.conf
+    content: |
+      # Forward minecraft service logs to syslog with custom tag
+      # Azure Monitor Agent collects these via syslog data source
+      if $programname == 'minecraft' then /var/log/minecraft/server.log
+      & stop
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart rsyslog
+  tags:
+    - monitoring
+    - logs
+
+# ============================================================================
+# CONFIGURE LOG ROTATION
+# ============================================================================
+# Prevents minecraft logs from filling disk space
+
+- name: Configure logrotate for minecraft logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/minecraft
+    content: |
+      /var/log/minecraft/*.log {
+          daily
+          rotate 7
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0644 minecraft minecraft
+          sharedscripts
+          postrotate
+              systemctl reload rsyslog > /dev/null 2>&1 || true
+          endscript
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - monitoring
+    - logs
+
+# ============================================================================
+# VERIFY AZURE MONITOR AGENT
+# ============================================================================
+# Check that agent is installed and running (installed via Terraform)
+
+- name: Verify Azure Monitor Agent is installed
+  ansible.builtin.stat:
+    path: /opt/microsoft/azuremonitoragent/bin/mdsd
+  register: ama_binary
+  tags:
+    - monitoring
+    - validation
+
+- name: Display Azure Monitor Agent status
+  ansible.builtin.debug:
+    msg: >
+      {% if ama_binary.stat.exists %}
+      Azure Monitor Agent is installed (via Terraform VM extension)
+      {% else %}
+      WARNING: Azure Monitor Agent not found. Check Terraform VM extension.
+      {% endif %}
+  tags:
+    - monitoring
+    - validation
+
+- name: Check Azure Monitor Agent service status
+  ansible.builtin.systemd:
+    name: azuremonitoragent
+    state: started
+  check_mode: true
+  register: ama_service
+  ignore_errors: true
+  tags:
+    - monitoring
+    - validation
+
