@@ -2,27 +2,9 @@
 # Backup to Azure Blob Storage - Tasks
 # Runs BEFORE Minecraft starts on boot with duplicate prevention
 
-- name: Add Microsoft GPG key
-  ansible.builtin.get_url:
-    url: https://packages.microsoft.com/keys/microsoft.asc
-    dest: /usr/share/keyrings/microsoft-archive-keyring.asc
-    mode: '0644'
-  tags:
-    - backup
-    - packages
-
-- name: Add Microsoft repository for azcopy
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.asc] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
-    state: present
-    filename: microsoft-azure-cli
-  tags:
-    - backup
-    - packages
-
-- name: Install azcopy from Microsoft repository
+- name: Ensure Azure CLI is installed
   ansible.builtin.apt:
-    name: azcopy
+    name: azure-cli
     state: present
     update_cache: true
   tags:
