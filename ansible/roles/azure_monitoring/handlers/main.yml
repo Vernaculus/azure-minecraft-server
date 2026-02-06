@@ -1,0 +1,14 @@
+---
+# Azure Monitoring Role - Handlers
+
+- name: restart minecraft
+  ansible.builtin.systemd:
+    name: minecraft
+    state: restarted
+  ignore_errors: true
+
+- name: restart rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    state: restarted
+

@@ -105,10 +105,20 @@ variable "os_disk_type" {
   default     = "StandardSSD_LRS"
 }
 
-# ADDED: Short location code for naming (scus = South Central US)
+# Short location code for naming (scus = South Central US)
 variable "location_short" {
   description = "Short code for Azure region (used in resource naming)"
   type        = string
   default     = "scus"
 }
 
+# Admin email for monitoring alerts
+variable "admin_email" {
+  description = "Email address for receiving monitoring alerts"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.admin_email))
+    error_message = "Must be a valid email address"
+  }
+}

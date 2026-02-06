@@ -90,3 +90,14 @@ output "blob_endpoint" {
   description = "Blob storage endpoint"
   value       = module.storage.blob_endpoint
 }
+# Monitoring Outputs
+output "log_analytics_workspace_id" {
+  description = "Log Analytics Workspace ID"
+  value       = module.monitoring.workspace_customer_id
+}
+
+output "action_group_id" {
+  description = "Monitoring action group ID"
+  value       = module.monitoring.action_group_id
+}
+

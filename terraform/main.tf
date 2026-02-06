@@ -121,3 +121,22 @@ module "storage" {
   tags = var.tags
 }
 
+# Azure Monitor for alerting and observability
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  workspace_name      = "law-minecraft-${var.environment}-${var.location_short}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name
+  vm_id               = module.compute.vm_id
+  key_vault_id        = module.keyvault.key_vault_id
+  admin_email         = var.admin_email
+
+  tags = var.tags
+
+  depends_on = [
+    module.compute,
+    module.keyvault
+  ]
+}
+

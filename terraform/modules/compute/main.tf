@@ -92,3 +92,33 @@ resource "azurerm_role_assignment" "vm_keyvault_access" {
   principal_id = azurerm_linux_virtual_machine.main.identity[0].principal_id
 }
 
+# ============================================================================
+# AZURE MONITOR AGENT EXTENSION
+# ============================================================================
+# Installs Azure Monitor Agent on the VM for metrics and log collection
+# Uses VM's managed identity for authentication (no credentials needed)
+# Data collection configured by Data Collection Rule (in monitoring module)
+
+resource "azurerm_virtual_machine_extension" "azure_monitor_agent" {
+  name                       = "AzureMonitorLinuxAgent"
+  virtual_machine_id         = azurerm_linux_virtual_machine.main.id
+  publisher                  = "Microsoft.Azure.Monitor"
+  type                       = "AzureMonitorLinuxAgent"
+  type_handler_version       = "1.28"
+  auto_upgrade_minor_version = true
+
+  # Settings for the extension
+  # Authentication via managed identity (no credentials needed)
+  settings = jsonencode({
+    workspaceId = "placeholder" # Not needed with DCR-based collection
+  })
+
+  tags = var.tags
+
+  # Ensure VM and its managed identity are fully created first
+  depends_on = [
+    azurerm_linux_virtual_machine.main,
+    azurerm_role_assignment.vm_keyvault_access
+  ]
+}
+
