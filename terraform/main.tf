@@ -136,7 +136,8 @@ module "monitoring" {
 
   depends_on = [
     module.compute,
-    module.keyvault
+    module.keyvault,
+    module.compute.vm_ready
   ]
 }
 

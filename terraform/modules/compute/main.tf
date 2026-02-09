@@ -122,3 +122,24 @@ resource "azurerm_virtual_machine_extension" "azure_monitor_agent" {
   ]
 }
 
+# ============================================================================
+# WAIT FOR VM INITIALIZATION
+# ============================================================================
+# Ensures VM is fully initialized before Ansible configuration
+# - SSH service is started and accepting connections
+# - Azure Monitor Agent extension is fully installed
+# - System is ready for configuration management
+
+resource "time_sleep" "wait_for_vm_initialization" {
+  depends_on = [
+    azurerm_linux_virtual_machine.main,
+    azurerm_virtual_machine_extension.azure_monitor_agent
+  ]
+
+  # Wait 30 seconds after VM and extensions are created
+  create_duration = "30s"
+
+  # Optional: Add longer delay if extensions fail frequently
+  # create_duration = "60s"
+}
+

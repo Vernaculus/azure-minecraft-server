@@ -2,14 +2,65 @@
 # Backup to Azure Blob Storage - Tasks
 # Runs BEFORE Minecraft starts on boot with duplicate prevention
 
-- name: Ensure Azure CLI is installed
+- name: Install prerequisites for Azure CLI repository
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - apt-transport-https
+      - lsb-release
+      - gnupg
+    state: present
+    update_cache: yes
+  tags:
+    - backup
+    - azure-cli
+
+- name: Create directory for apt keyrings
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  tags:
+    - backup
+    - azure-cli
+
+- name: Download Microsoft signing key
+  ansible.builtin.get_url:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    dest: /tmp/microsoft.asc
+    mode: '0644'
+  tags:
+    - backup
+    - azure-cli
+
+- name: Add Microsoft signing key to keyring
+  ansible.builtin.shell: |
+    gpg --dearmor < /tmp/microsoft.asc > /etc/apt/keyrings/microsoft.gpg
+    chmod 644 /etc/apt/keyrings/microsoft.gpg
+  args:
+    creates: /etc/apt/keyrings/microsoft.gpg
+  tags:
+    - backup
+    - azure-cli
+
+- name: Add Azure CLI repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
+    state: present
+    filename: azure-cli
+  tags:
+    - backup
+    - azure-cli
+
+- name: Install Azure CLI
   ansible.builtin.apt:
     name: azure-cli
     state: present
-    update_cache: true
+    update_cache: yes
   tags:
     - backup
-    - packages
+    - azure-cli
 
 - name: Install jq for JSON parsing
   ansible.builtin.apt:

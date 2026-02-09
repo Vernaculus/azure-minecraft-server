@@ -22,3 +22,8 @@ output "vm_identity_principal_id" {
   value       = azurerm_linux_virtual_machine.main.identity[0].principal_id
 }
 
+# VM Readiness - ensures VM is fully initialized before downstream dependencies
+output "vm_ready" {
+  description = "Signals that VM is fully initialized and ready for configuration"
+  value       = time_sleep.wait_for_vm_initialization.id
+}

@@ -13,8 +13,8 @@
   ansible.builtin.file:
     path: /var/log/minecraft
     state: directory
-    owner: minecraft
-    group: minecraft
+    owner: root
+    group: root
     mode: '0755'
   tags:
     - monitoring
