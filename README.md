@@ -37,6 +37,20 @@ This is a learning project that deploys a production-ready Minecraft server on A
 - Backup System: Automated boot/shutdown backups with 7-day lifecycle policy
 - Secrets: Azure Key Vault with managed identity authentication
 
+## Key Technical Decisions
+
+**Managed Identity over stored credentials for Azure authentication**
+All Azure service authentication (Key Vault, Blob Storage) uses the VM's system-assigned managed identity via IMDS token flow. No credentials are stored on the VM, in scripts, or in the repository. This eliminates an entire class of credential exposure risk and mirrors production zero-trust patterns.
+
+**UFW firewall over RCON bind address for RCON security**
+Minecraft Java Edition 1.21.11 does not support the `rcon.bind` directive (RCON always binds to `0.0.0.0:25575` regardless of configuration). Rather than relying on an unsupported config directive, UFW default-deny policy blocks external access to port 25575 at the host level. Validated externally via nmap confirming the port is filtered from the internet.
+
+**Event-driven backups over scheduled cron jobs**
+Backups trigger on systemd boot and shutdown events rather than a fixed schedule. This ensures a backup is always captured at the most meaningful moments (before startup and after last player activity) regardless of when the VM runs, while boot-time deduplication prevents redundant archives within the same day.
+
+**Intelligent reboot management over simple cron reboots**
+Security update reboots query live player count via RCON before acting. Zero players triggers an immediate reboot. Active players receive a 10-minute in-game countdown with progressive warnings before a graceful shutdown. This prevents disrupting active sessions while still ensuring timely security patching on a cost-optimized VM that may run infrequently.
+
 ## Project Status
 
 Phase 1 Complete - Foundation established (Jan 20, 2026)
