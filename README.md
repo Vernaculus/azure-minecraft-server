@@ -277,6 +277,13 @@ azure-minecraft-server/
   always exists regardless of VM idle duration. The current 7-day rule only targets the
   `minecraft-backups/minecraft-world` prefix and would not affect the anchor blob.
 
+- **Azure Bastion for secure VM management** — Replace direct SSH access (which requires
+  maintaining a whitelisted /32 source IP in the NSG) with Azure Bastion, providing
+  browser-based SSH access through the Azure portal over TLS 443 with no public port
+  exposure. This eliminates the NSG SSH rule entirely, removes the operational burden of
+  updating the source IP whitelist when working from different networks, and improves the
+  security posture by removing port 22 from the public attack surface.
+
 ## Proof of Deployment
 
 All phases were deployed and validated on live Azure infrastructure.
