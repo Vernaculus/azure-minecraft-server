@@ -241,6 +241,59 @@ azure-minecraft-server/
 - Automated patching requires intelligent scheduling for cost-optimized VMs
 - Event-based backups (boot/shutdown) prevent data loss without scheduled jobs
 
+## Roadmap
+
+- **Backup anchor retention** — Implement a protected `latest-known-good` blob prefix
+  outside the 7-day lifecycle policy scope. The backup script will copy the most recent
+  backup to this prefix on every successful run, ensuring at least one recovery point
+  always exists regardless of VM idle duration. The current 7-day rule only targets the
+  `minecraft-backups/minecraft-world` prefix and would not affect the anchor blob.
+
+## Proof of Deployment
+
+All phases were deployed and validated on live Azure infrastructure.
+
+### Resource Group -- Full Stack Provisioned via Terraform
+
+Complete infrastructure stack in a single resource group: VM, VNet, NSG, NIC, Public IP,
+OS Disk, Storage Account, and Key Vault -- all provisioned by Terraform with governance
+tags confirming IaC-managed resources.
+
+![Resource Group](docs/screenshots/screenshot-resource-group.jpg)
+
+### NSG Rules -- Least-Privilege Network Security
+
+Custom inbound rules enforce a default-deny posture: SSH restricted to a single admin /32
+source IP (priority 100), application port open to Internet (priority 110), all other
+inbound traffic explicitly denied (priority 4000). Tags confirm managedBy: terraform.
+
+![NSG Rules](docs/screenshots/screenshot-nsg-rules.jpg)
+
+### Azure Blob Storage -- Automated Backups Running
+
+Six backup archives captured across boot and shutdown events, confirming both triggers fire
+correctly. Naming convention (minecraft-world-boot-YYYYMMDD-HHMMSS and
+minecraft-world-shutdown-YYYYMMDD-HHMMSS) confirms event-driven deduplication is working
+as designed.
+
+![Backup Blobs](docs/screenshots/screenshot-backup-blobs.jpg)
+
+### Blob Lifecycle Policy -- Automated 7-Day Retention
+
+Auto-delete lifecycle policy scoped to the minecraft-backups/minecraft-world prefix,
+targeting blockBlob type only. Policy enforced at the storage account level with a 7-day
+daysAfterModificationGreaterThan rule.
+
+![Lifecycle Policy](docs/screenshots/screenshot-lifecycle-policy.jpg)
+
+### End-to-End Validation -- Live Deployment via Terraform and Ansible
+
+Successful connection to the running server with RCON broadcasting the automated deployment
+completion message, confirming the full automation chain: Terraform infrastructure
+provisioning --> Ansible configuration management --> systemd service --> RCON automation.
+
+![In-Game Validation](docs/screenshots/screenshot-minecraft-ingame.jpg)
+
 ## Contributing
 
 This is a personal learning project. Feel free to fork and adapt for your own use.
