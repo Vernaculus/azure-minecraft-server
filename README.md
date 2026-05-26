@@ -259,7 +259,7 @@ Complete infrastructure stack in a single resource group: VM, VNet, NSG, NIC, Pu
 OS Disk, Storage Account, and Key Vault -- all provisioned by Terraform with governance
 tags confirming IaC-managed resources.
 
-![Resource Group](docs/screenshots/screenshot-resource-group.jpg)
+![Resource Group](docs/screenshots/screenshot-resource-group.png)
 
 ### NSG Rules -- Least-Privilege Network Security
 
@@ -267,7 +267,7 @@ Custom inbound rules enforce a default-deny posture: SSH restricted to a single 
 source IP (priority 100), application port open to Internet (priority 110), all other
 inbound traffic explicitly denied (priority 4000). Tags confirm managedBy: terraform.
 
-![NSG Rules](docs/screenshots/screenshot-nsg-rules.jpg)
+![NSG Rules](docs/screenshots/screenshot-nsg-rules.png)
 
 ### Azure Blob Storage -- Automated Backups Running
 
@@ -276,7 +276,7 @@ correctly. Naming convention (minecraft-world-boot-YYYYMMDD-HHMMSS and
 minecraft-world-shutdown-YYYYMMDD-HHMMSS) confirms event-driven deduplication is working
 as designed.
 
-![Backup Blobs](docs/screenshots/screenshot-backup-blobs.jpg)
+![Backup Blobs](docs/screenshots/screenshot-backup-blobs.png)
 
 ### Blob Lifecycle Policy -- Automated 7-Day Retention
 
@@ -284,7 +284,7 @@ Auto-delete lifecycle policy scoped to the minecraft-backups/minecraft-world pre
 targeting blockBlob type only. Policy enforced at the storage account level with a 7-day
 daysAfterModificationGreaterThan rule.
 
-![Lifecycle Policy](docs/screenshots/screenshot-lifecycle-policy.jpg)
+![Lifecycle Policy](docs/screenshots/screenshot-lifecycle-policy.png)
 
 ### End-to-End Validation -- Live Deployment via Terraform and Ansible
 
@@ -292,7 +292,7 @@ Successful connection to the running server with RCON broadcasting the automated
 completion message, confirming the full automation chain: Terraform infrastructure
 provisioning --> Ansible configuration management --> systemd service --> RCON automation.
 
-![In-Game Validation](docs/screenshots/screenshot-minecraft-ingame.jpg)
+![In-Game Validation](docs/screenshots/screenshot-minecraft-ingame.png)
 
 ## Contributing
 
