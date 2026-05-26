@@ -112,7 +112,7 @@ Phase 6 Complete - Automated Backup System (Feb 5, 2026)
 git clone https://github.com/Vernaculus/azure-minecraft-server.git
 cd azure-minecraft-server/terraform
 cp example.tfvars terraform.tfvars
-# Edit terraform.tfvars with your values
+### Edit terraform.tfvars with your values
 
 2. Deploy Infrastructure
 
@@ -123,7 +123,7 @@ terraform apply
 3. Configure Server (Ansible)
 
 cd ../ansible
-# Update inventory/hosts.ini with VM public IP
+### Update inventory/hosts.ini with VM public IP
 ansible-playbook playbooks/site.yml
 
 4. Connect to Minecraft
