@@ -12,6 +12,20 @@ This is a learning project that deploys a production-ready Minecraft server on A
 - Automated backups to Azure Blob Storage with lifecycle management
 - Cost optimization (deallocate when not in use)
 
+## Competencies Demonstrated
+
+**Cloud Platform:** Azure (IaaS) · Azure CLI · Azure Resource Manager · Azure Key Vault · Azure Blob Storage · Azure Virtual Network · Network Security Groups · Azure Monitor Agent · Log Analytics Workspace
+
+**Infrastructure as Code:** Terraform · HCL · Remote State (Azure Storage Backend) · Modular Design · Resource Tagging · Managed Identity · RBAC
+
+**Configuration Management:** Ansible · Playbooks · Roles · Idempotent Automation · systemd Integration · Jinja2 Templates
+
+**Security:** Defense-in-Depth · NSG Least-Privilege · UFW Host Firewall · fail2ban · SSH Hardening · Zero-Credential Architecture · Key Vault Secret Retrieval via IMDS Token Flow
+
+**Linux & Systems:** Ubuntu 22.04 LTS · Bash Scripting · systemd Services · Log Rotation · Unattended Security Updates · Intelligent Reboot Management
+
+**Operations:** Event-Driven Backups · Lifecycle Policy Automation · Cost Optimization (VM Deallocation) · RCON Automation · Structured Logging
+
 ## Architecture
 
 - Cloud Provider: Microsoft Azure
