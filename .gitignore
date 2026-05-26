@@ -65,3 +65,4 @@ id_rsa*
 
 # Files marked as old
 *.old
+ansible/terraform-outputs.json
