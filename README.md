@@ -201,6 +201,7 @@ ssh mcadmin@<VM_PUBLIC_IP> sudo /usr/local/bin/scheduled-reboot.sh 5
 
 ## Repository Structure
 
+```
 azure-minecraft-server/
 ├── terraform/
 │   ├── main.tf                 # Root module orchestration
@@ -223,6 +224,7 @@ azure-minecraft-server/
 │       ├── minecraft_server/   # Server installation
 │       └── backup_to_blob/     # Automated backups
 └── docs/                       # Project documentation
+```
 
 ## Cost Optimization
 
