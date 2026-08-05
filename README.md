@@ -1,10 +1,10 @@
-# Azure Minecraft Server - Infrastructure as Code
+# Azure Linux Server Infrastructure - Infrastructure as Code
 
 Automated Minecraft server deployment on Azure using Terraform and Ansible. This project demonstrates infrastructure as code, configuration management, and security best practices in a cloud environment.
 
 ## Project Overview
 
-This is a learning project that deploys a production-ready Minecraft server on Azure with:
+This is a learning project that deploys a production-ready Linux application server on Azure with:
 - Infrastructure provisioning via Terraform
 - Configuration management via Ansible
 - Multi-layered security (NSG, UFW, fail2ban, SSH hardening)
