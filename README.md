@@ -42,14 +42,14 @@ This is a learning project that deploys a production-ready Linux application ser
 **Managed Identity over stored credentials for Azure authentication**
 All Azure service authentication (Key Vault, Blob Storage) uses the VM's system-assigned managed identity via IMDS token flow. No credentials are stored on the VM, in scripts, or in the repository. This eliminates an entire class of credential exposure risk and mirrors production zero-trust patterns.
 
-**UFW firewall over RCON bind address for RCON security**
-Minecraft Java Edition 1.21.11 does not support the `rcon.bind` directive (RCON always binds to `0.0.0.0:25575` regardless of configuration). Rather than relying on an unsupported config directive, UFW default-deny policy blocks external access to port 25575 at the host level. Validated externally via nmap confirming the port is filtered from the internet.
+**Host firewall over application-layer bind restrictions**
+The application's remote management protocol does not support binding to a specific interface. Rather than relying on an application-level config directive that isn't honored, UFW default-deny policy blocks external access to the management port at the host level. Validated externally via nmap confirming the port is filtered from the internet.
 
 **Event-driven backups over scheduled cron jobs**
 Backups trigger on systemd boot and shutdown events rather than a fixed schedule. This ensures a backup is always captured at the most meaningful moments (before startup and after last player activity) regardless of when the VM runs, while boot-time deduplication prevents redundant archives within the same day.
 
-**Intelligent reboot management over simple cron reboots**
-Security update reboots query live player count via RCON before acting. Zero players triggers an immediate reboot. Active players receive a 10-minute in-game countdown with progressive warnings before a graceful shutdown. This prevents disrupting active sessions while still ensuring timely security patching on a cost-optimized VM that may run infrequently.
+**Session-aware reboot management over simple cron reboots**
+Security update reboots check for active application sessions before acting. Zero active sessions triggers an immediate reboot. Active sessions receive a 10-minute countdown with progressive warnings before a graceful shutdown. This prevents disrupting active users while still ensuring timely security patching on a cost-optimized VM that may run infrequently.
 
 ## Project Status
 
